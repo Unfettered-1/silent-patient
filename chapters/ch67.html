@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Silent Patient — Alex Michaelides</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink: #1a1208;
+  --paper: #f7f2e8;
+  --paper2: #f0e9d6;
+  --gold: #c8922a;
+  --gold2: #e8b84b;
+  --red: #8b1a1a;
+  --muted: #7a6e5f;
+  --border: #d4c49a;
+  --sidebar-w: 260px;
+}
+
+/* CRITICAL: no sticky/fixed elements — these cause Read Aloud to jump */
+html, body {
+  height: auto;
+  overflow: auto;
+  scroll-behavior: auto;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 19px;
+  line-height: 1.85;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR — static, not fixed ── */
+#sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--ink);
+  border-right: 2px solid var(--gold);
+  /* NOT fixed — just a normal flex column */
+  position: static;
+  align-self: flex-start;
+  /* Sticky within scroll — safe for Read Aloud */
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+#sidebar::-webkit-scrollbar { width: 4px; }
+#sidebar::-webkit-scrollbar-track { background: transparent; }
+#sidebar::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+
+.sidebar-header {
+  padding: 28px 20px 20px;
+  border-bottom: 1px solid rgba(200,146,42,0.3);
+}
+.book-title {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--gold2);
+  text-transform: uppercase;
+  line-height: 1.4;
+  margin-bottom: 5px;
+}
+.book-author {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--muted);
+}
+.toc-nav { padding: 16px 0 40px; }
+.toc-nav ul { list-style: none; }
+li.toc-part {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+  text-transform: uppercase;
+  padding: 16px 20px 4px;
+  opacity: 0.6;
+}
+.toc-link {
+  display: block;
+  padding: 5px 20px;
+  font-size: 13px;
+  color: #b0a080;
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all 0.2s;
+}
+.toc-link:hover {
+  color: var(--gold2);
+  background: rgba(200,146,42,0.06);
+}
+.toc-link.active {
+  color: var(--gold2);
+  border-left-color: var(--gold);
+  padding-left: 26px;
+  background: rgba(200,146,42,0.08);
+}
+
+/* ── MAIN CONTENT ── */
+#main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Cover */
+#cover {
+  padding: 100px 60px 80px;
+  text-align: center;
+  background: var(--ink);
+  color: var(--paper);
+  border-bottom: 2px solid var(--gold);
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.cover-ornament {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 40px;
+}
+.cover-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(32px, 5vw, 60px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--paper);
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+.cover-the {
+  font-family: 'Crimson Pro', serif;
+  font-size: clamp(16px, 2.5vw, 26px);
+  font-style: italic;
+  font-weight: 300;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 4px;
+  letter-spacing: 0.12em;
+}
+.cover-divider {
+  width: 60px; height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  margin: 0 auto 20px;
+}
+.cover-author {
+  font-family: 'Crimson Pro', serif;
+  font-size: 18px;
+  font-style: italic;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+.cover-tagline {
+  font-size: 15px;
+  font-style: italic;
+  color: rgba(247,242,232,0.4);
+  max-width: 400px;
+}
+.cover-scroll { display: none; }
+
+/* Chapters */
+section.chapter {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 64px 40px 80px;
+  border-bottom: 1px solid var(--border);
+}
+.chheader {
+  text-align: center;
+  margin-bottom: 40px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.chheader::after {
+  content: '❧';
+  position: absolute;
+  bottom: -13px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--paper);
+  padding: 0 10px;
+  color: var(--gold);
+  font-size: 16px;
+}
+.partlabel {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.chtitle {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(16px, 2.5vw, 22px);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.08em;
+}
+.chbody p {
+  margin-bottom: 1.3em;
+  text-indent: 2em;
+}
+.chbody p:first-child {
+  text-indent: 0;
+}
+
+/* Font controls */
+.font-controls {
+  position: sticky;
+  top: 0;
+  background: var(--paper2);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  z-index: 10;
+}
+.font-btn {
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 3px 10px;
+  border-radius: 2px;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+.font-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+::-webkit-scrollbar { width: 7px; }
+::-webkit-scrollbar-track { background: var(--paper2); }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 4px; }
+
+@media (max-width: 768px) {
+  #sidebar { display: none; }
+  section.chapter { padding: 40px 20px 60px; }
+  .font-controls { padding: 8px 20px; }
+}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="book-title">The Silent Patient</div>
+    <div class="book-author">Alex Michaelides</div>
+  </div>
+  <div class="toc-nav">
+    <ul id="toc-list">
+<li><a href="ch1.html" class="toc-link">PROLOGUE</a></li>
+<li class="toc-part">PART ONE</li>
+<li><a href="ch2.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch3.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch4.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch5.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch6.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch7.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch8.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch9.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch10.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch11.html" class="toc-link">CHAPTER TEN</a></li>
+<li class="toc-part">PART TWO</li>
+<li><a href="ch12.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch13.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch14.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch15.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch16.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch17.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch18.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch19.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch20.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch21.html" class="toc-link">CHAPTER TEN</a></li>
+<li><a href="ch22.html" class="toc-link">CHAPTER ELEVEN</a></li>
+<li><a href="ch23.html" class="toc-link">CHAPTER TWELVE</a></li>
+<li><a href="ch24.html" class="toc-link">CHAPTER THIRTEEN</a></li>
+<li><a href="ch25.html" class="toc-link">CHAPTER FOURTEEN</a></li>
+<li><a href="ch26.html" class="toc-link">CHAPTER FIFTEEN</a></li>
+<li><a href="ch27.html" class="toc-link">CHAPTER SIXTEEN</a></li>
+<li><a href="ch28.html" class="toc-link">CHAPTER SEVENTEEN</a></li>
+<li><a href="ch29.html" class="toc-link">CHAPTER EIGHTEEN</a></li>
+<li><a href="ch30.html" class="toc-link">CHAPTER NINETEEN</a></li>
+<li><a href="ch31.html" class="toc-link">CHAPTER TWENTY</a></li>
+<li><a href="ch32.html" class="toc-link">CHAPTER TWENTY-ONE</a></li>
+<li><a href="ch33.html" class="toc-link">CHAPTER TWENTY-TWO</a></li>
+<li><a href="ch34.html" class="toc-link">CHAPTER TWENTY-THREE</a></li>
+<li><a href="ch35.html" class="toc-link">CHAPTER TWENTY-FOUR</a></li>
+<li><a href="ch36.html" class="toc-link">CHAPTER TWENTY-FIVE</a></li>
+<li><a href="ch37.html" class="toc-link">CHAPTER TWENTY-SIX</a></li>
+<li><a href="ch38.html" class="toc-link">CHAPTER TWENTY-SEVEN</a></li>
+<li><a href="ch39.html" class="toc-link">CHAPTER TWENTY-EIGHT</a></li>
+<li><a href="ch40.html" class="toc-link">CHAPTER TWENTY-NINE</a></li>
+<li><a href="ch41.html" class="toc-link">CHAPTER THIRTY</a></li>
+<li><a href="ch42.html" class="toc-link">CHAPTER THIRTY-ONE</a></li>
+<li><a href="ch43.html" class="toc-link">CHAPTER THIRTY-TWO</a></li>
+<li><a href="ch44.html" class="toc-link">CHAPTER THIRTY-THREE</a></li>
+<li><a href="ch45.html" class="toc-link">CHAPTER THIRTY-FOUR</a></li>
+<li class="toc-part">PART FOUR</li>
+<li><a href="ch46.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch47.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch48.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch49.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch50.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch51.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch52.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch53.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch54.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch55.html" class="toc-link">CHAPTER TEN</a></li>
+<li><a href="ch56.html" class="toc-link">CHAPTER ELEVEN</a></li>
+<li><a href="ch57.html" class="toc-link">CHAPTER TWELVE</a></li>
+<li><a href="ch58.html" class="toc-link">CHAPTER THIRTEEN</a></li>
+<li><a href="ch59.html" class="toc-link">CHAPTER FOURTEEN</a></li>
+<li><a href="ch60.html" class="toc-link">CHAPTER FIFTEEN</a></li>
+<li><a href="ch61.html" class="toc-link">CHAPTER SIXTEEN</a></li>
+<li><a href="ch62.html" class="toc-link">CHAPTER SEVENTEEN</a></li>
+<li><a href="ch63.html" class="toc-link">CHAPTER EIGHTEEN</a></li>
+<li><a href="ch64.html" class="toc-link">CHAPTER NINETEEN</a></li>
+<li><a href="ch65.html" class="toc-link">CHAPTER TWENTY</a></li>
+<li><a href="ch66.html" class="toc-link">CHAPTER TWENTY-ONE</a></li>
+<li class="toc-part">PART FIVE</li>
+<li><a href="ch67.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch68.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch69.html" class="toc-link">CHAPTER THREE</a></li>
+
+    </ul>
+  </div>
+</nav>
+
+<div id="main">
+  <div id="cover">
+    <div class="cover-ornament">A Novel</div>
+    <h1 class="cover-title">
+      <span class="cover-the">The</span>
+      Silent Patient
+    </h1>
+    <div class="cover-divider"></div>
+    <div class="cover-author">Alex Michaelides</div>
+    <p class="cover-tagline">"But why does she not speak?" — Euripides, Alcestis</p>
+  </div>
+
+  <div class="font-controls">
+    FONT SIZE:
+    <button class="font-btn" onclick="changeFont(-1)">A−</button>
+    <button class="font-btn" onclick="changeFont(1)">A+</button>
+  </div>
+
+  <div id="chapters-wrap">
+
+<article class="chapter" id="ch67">
+
+<div class="chheader">
+<div class="partlabel">PART FIVE</div>
+<h2 class="chtitle">CHAPTER ONE</h2>
+</div>
+<div class="chbody">
+<p>Alicia Berenson’s Diary FEBRUARY 23 Theo just left. I am alone. I’m writing this as fast as I can. I haven’t got much time. I’ve got to get this down while I still have the strength. I thought I was crazy at first. It was easier to think I was crazy than believe it was true. But I’m not crazy. I’m not. That first time I met him in the therapy room, I wasn’t sure—there was something familiar about him, but different—I recognized his eyes, not just the color but the shape. And the same smell of cigarettes and smoky aftershave. And the way he formed words, and the rhythm of his speech—but not the tone of his voice, it seemed different somehow. So I wasn’t sure—but the next time we met, he gave himself away. He said the same words—the exact same phrase he’d used at the house, burned into my memory: “I want to help you—I want to help you see clearly.” As soon as I heard that, something in my brain clicked and the jigsaw came together—the picture was complete. It was him. And something in me took over, some kind of wild animal instinct. I wanted to kill him, kill or be killed—I leaped on him and tried to strangle him and scratch his eyes out, bash his skull to pieces on the floor. But I didn’t succeed in killing him, and they held me down and drugged me and locked me up. And then—after that I lost my nerve. I started to doubt myself again—maybe I’d made a mistake, maybe I was imagining it, maybe it wasn’t him. How could it possibly be Theo? What purpose could he have in coming here to taunt me like this? And then I understood. All that bullshit about wanting to help me—that was the sickest part of it. He was getting a kick out of it, he was getting off on it—that’s why he was here. He had come back to gloat. “I want to help you—I want to help you see clearly.” Well, now I saw. I saw clearly. I wanted him to know that I knew. So I lied about the way Gabriel died. As I was talking, I could see he knew I was lying. We looked at each other and he saw it—that I had recognized him. And there</p>
+<p>was something in his eyes I’d never seen before. Fear. He was afraid of me— of what I might say. He was scared—of the sound of my voice. That’s why he came back a few minutes ago. He didn’t say anything this time. No more words. He grabbed my wrist and stuck a needle in my vein. I didn’t struggle. I didn’t fight back. I let him do it. I deserve it—I deserve this punishment. I am guilty—but so is he. That’s why I’m writing this—so he won’t get away with it. So he will be punished. I’ve got to be quick. I can feel it now—the stuff he injected me with is working. I’m so drowsy. I want to lie down. I want to sleep.… But no—not yet. I’ve got to stay awake. I’ve got to finish the story. And this time, I’ll tell the truth. That night, Theo broke into the house and tied me up—and when Gabriel came home, Theo knocked him out. At first I thought he’d killed him—but then I saw Gabriel was breathing. Theo pulled him up and tied him to the chair. He moved it so Gabriel and I were sitting back-to-back, and I couldn’t see his face. “Please,” I said. “Please don’t hurt him. I’m begging you—I’ll do anything, anything you want.” Theo laughed. I’d come to hate his laugh so much—it was cold, empty. Heartless. “Hurt him?” He shook his head. “I’m going to kill him.” He meant it. I felt such terror, I lost control of my tears. I wept and pleaded. “I’ll do anything you want, anything—please, please let him live—he deserves to live. He’s the kindest and the best of men—and I love him, I love him so much—” “Tell me, Alicia. Tell me about your love for him. Tell me, do you think he loves you?” “He loves me,” I said. I heard the clock ticking in the background. There seemed to be an age before he replied. “We’ll see,” he said. His black eyes stared at me for a second and I felt consumed by darkness. I was in the presence of a creature that wasn’t even human. He was evil. He walked around the chair and faced Gabriel. I turned my head as far as I could, but I couldn’t see them. There was a horrible dull thud—I flinched as I heard him strike Gabriel across the face. He hit him again and again, until</p>
+<p>Gabriel started spluttering and woke up. “Hello, Gabriel,” he said. “Who the fuck are you?” “I’m a married man. So I know what it’s like to love someone. And I know what it’s like to be let down.” “What the fuck are you talking about?” “Only cowards betray the people who love them. Are you a coward, Gabriel?” “Fuck you.” “I was going to kill you. But Alicia pleaded for your life. So instead, I’m going to give you a choice. Either you die—or Alicia does. You decide.” The way he spoke was so cool and calm and in control. No emotion. Gabriel didn’t reply for a second. He sounded out of breath, like he’d been punched. “No—” “Yes. Alicia dies, or you die. Your choice, Gabriel. Let’s find out how much you love her. Would you die for her? You have ten seconds to decide.… Ten … nine—” “Don’t believe him,” I said. “He’s going to kill us both—I love you—” “—eight … seven—” “I know you love me, Gabriel—” “—six … five—” “You love me—” “—four … three—” “Gabriel, say you love me—” “—two—” And then Gabriel spoke. I didn’t recognize his voice at first. Such a tiny voice, so far away—a little boy’s voice. A small child—with the power of life and death at his fingertips. “I don’t want to die,” he said. Then there was silence. Everything stopped. Inside my body, every cell</p>
+<p>deflated; wilting cells, like dead petals falling from a flower. Jasmine flowers floating to the ground. Can I smell jasmine somewhere? Yes, yes, sweet jasmine—on the windowsill perhaps … Theo stepped away from Gabriel and started talking to me. I found it hard to focus on his words. “You see, Alicia? I knew Gabriel was a coward—fucking my wife behind my back. He destroyed the only happiness I’ve ever had.” Theo leaned forward, right in my face. “I’m sorry to do this. But quite frankly, now you know the truth … you’re better off dead.” He raised the gun and pointed it at my head. I shut my eyes. I heard Gabriel screaming—“Don’t shoot don’t shoot don’t—” A click. And then a gunshot—so loud that it blew away all other sound. There was silence for a few seconds. I thought I was dead. But I wasn’t so lucky. I opened my eyes. Theo was still there—pointing the gun at the ceiling. He smiled. He put his finger to his lips, telling me to keep quiet. “Alicia?” Gabriel shouted. “Alicia?” I could hear Gabriel writhing in his chair, trying to turn around to see what had happened. “What did you do to her, you bastard? You fucking bastard. Oh, Jesus—” Theo untied my wrists. He dropped the gun to the floor. Then he kissed me, ever so gently, on the cheek. He walked out, and the front door slammed after him. Gabriel and I were alone. He was sobbing, crying, barely able to form words. He just kept calling my name, wailing, “Alicia, Alicia—” I remained silent. “Alicia? Fuck, fuck, oh, fuck—” I remained silent. “Alicia, answer me, Alicia—oh, God—” I remained silent. How could I talk? Gabriel had sentenced me to death. The dead don’t talk. I untied the wire around my ankles. I got up from the chair. I reached down to the floor. My fingers closed around the gun. It was hot and heavy in my hand.</p>
+<p>I walked around the chair, and I faced Gabriel. Tears were streaming down his cheeks. His eyes widened. “Alicia? You’re alive—thank God you’re—” I wish I could say I struck a blow for the defeated—that I was standing up for the betrayed and brokenhearted—that Gabriel had a tyrant’s eyes, my father’s eyes. But I’m past lying now. The truth is Gabriel had my eyes, suddenly—and I had his. Somewhere along the way we had swapped places. I saw it now. I would never be safe. Never be loved. All my hopes, dashed—all my dreams, shattered—leaving nothing, nothing. My father was right—I didn’t deserve to live. I was—nothing. That’s what Gabriel did to me. That’s the truth. I didn’t kill Gabriel. He killed me. All I did was pull the trigger.</p>
+</div>
+
+</article>
+
+        <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
+            <a href="ch66.html" style="padding: 10px 20px; background: #c8922a; color: #1a1208; text-decoration: none; border-radius: 4px; margin-right: 10px; font-weight: bold;">&laquo; Previous</a>
+            <a href="index.html" style="padding: 10px 20px; background: #f0e9d6; color: #1a1208; text-decoration: none; border-radius: 4px; border: 1px solid #c8922a; font-weight: bold;">Home</a>
+            <a href="ch68.html" style="padding: 10px 20px; background: #c8922a; color: #1a1208; text-decoration: none; border-radius: 4px; margin-left: 10px; font-weight: bold;">Next &raquo;</a>
+        </div>
+        
+
+  </div>
+</div>
+
+
+<script>
+// Font size
+let fontSize = 19;
+try { fontSize = parseInt(localStorage.getItem('tsp_fontSize') || '19'); } catch(e) {}
+function applyFont() {
+  document.querySelectorAll('.chbody').forEach(el => el.style.fontSize = fontSize + 'px');
+}
+function changeFont(d) {
+  fontSize = Math.min(28, Math.max(14, fontSize + d));
+  try { localStorage.setItem('tsp_fontSize', fontSize); } catch(e) {}
+  applyFont();
+}
+applyFont();
+
+// TOC active link on scroll
+const sections = document.querySelectorAll('section.chapter');
+const links = document.querySelectorAll('.toc-link');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+      if (active) {
+        active.classList.add('active');
+        active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// TOC click smooth scroll
+links.forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(link.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+</body>
+</html>

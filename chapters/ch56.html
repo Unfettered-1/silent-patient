@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Silent Patient — Alex Michaelides</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink: #1a1208;
+  --paper: #f7f2e8;
+  --paper2: #f0e9d6;
+  --gold: #c8922a;
+  --gold2: #e8b84b;
+  --red: #8b1a1a;
+  --muted: #7a6e5f;
+  --border: #d4c49a;
+  --sidebar-w: 260px;
+}
+
+/* CRITICAL: no sticky/fixed elements — these cause Read Aloud to jump */
+html, body {
+  height: auto;
+  overflow: auto;
+  scroll-behavior: auto;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 19px;
+  line-height: 1.85;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR — static, not fixed ── */
+#sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--ink);
+  border-right: 2px solid var(--gold);
+  /* NOT fixed — just a normal flex column */
+  position: static;
+  align-self: flex-start;
+  /* Sticky within scroll — safe for Read Aloud */
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+#sidebar::-webkit-scrollbar { width: 4px; }
+#sidebar::-webkit-scrollbar-track { background: transparent; }
+#sidebar::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+
+.sidebar-header {
+  padding: 28px 20px 20px;
+  border-bottom: 1px solid rgba(200,146,42,0.3);
+}
+.book-title {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--gold2);
+  text-transform: uppercase;
+  line-height: 1.4;
+  margin-bottom: 5px;
+}
+.book-author {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--muted);
+}
+.toc-nav { padding: 16px 0 40px; }
+.toc-nav ul { list-style: none; }
+li.toc-part {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+  text-transform: uppercase;
+  padding: 16px 20px 4px;
+  opacity: 0.6;
+}
+.toc-link {
+  display: block;
+  padding: 5px 20px;
+  font-size: 13px;
+  color: #b0a080;
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all 0.2s;
+}
+.toc-link:hover {
+  color: var(--gold2);
+  background: rgba(200,146,42,0.06);
+}
+.toc-link.active {
+  color: var(--gold2);
+  border-left-color: var(--gold);
+  padding-left: 26px;
+  background: rgba(200,146,42,0.08);
+}
+
+/* ── MAIN CONTENT ── */
+#main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Cover */
+#cover {
+  padding: 100px 60px 80px;
+  text-align: center;
+  background: var(--ink);
+  color: var(--paper);
+  border-bottom: 2px solid var(--gold);
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.cover-ornament {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 40px;
+}
+.cover-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(32px, 5vw, 60px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--paper);
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+.cover-the {
+  font-family: 'Crimson Pro', serif;
+  font-size: clamp(16px, 2.5vw, 26px);
+  font-style: italic;
+  font-weight: 300;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 4px;
+  letter-spacing: 0.12em;
+}
+.cover-divider {
+  width: 60px; height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  margin: 0 auto 20px;
+}
+.cover-author {
+  font-family: 'Crimson Pro', serif;
+  font-size: 18px;
+  font-style: italic;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+.cover-tagline {
+  font-size: 15px;
+  font-style: italic;
+  color: rgba(247,242,232,0.4);
+  max-width: 400px;
+}
+.cover-scroll { display: none; }
+
+/* Chapters */
+section.chapter {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 64px 40px 80px;
+  border-bottom: 1px solid var(--border);
+}
+.chheader {
+  text-align: center;
+  margin-bottom: 40px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.chheader::after {
+  content: '❧';
+  position: absolute;
+  bottom: -13px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--paper);
+  padding: 0 10px;
+  color: var(--gold);
+  font-size: 16px;
+}
+.partlabel {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.chtitle {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(16px, 2.5vw, 22px);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.08em;
+}
+.chbody p {
+  margin-bottom: 1.3em;
+  text-indent: 2em;
+}
+.chbody p:first-child {
+  text-indent: 0;
+}
+
+/* Font controls */
+.font-controls {
+  position: sticky;
+  top: 0;
+  background: var(--paper2);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  z-index: 10;
+}
+.font-btn {
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 3px 10px;
+  border-radius: 2px;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+.font-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+::-webkit-scrollbar { width: 7px; }
+::-webkit-scrollbar-track { background: var(--paper2); }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 4px; }
+
+@media (max-width: 768px) {
+  #sidebar { display: none; }
+  section.chapter { padding: 40px 20px 60px; }
+  .font-controls { padding: 8px 20px; }
+}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="book-title">The Silent Patient</div>
+    <div class="book-author">Alex Michaelides</div>
+  </div>
+  <div class="toc-nav">
+    <ul id="toc-list">
+<li><a href="ch1.html" class="toc-link">PROLOGUE</a></li>
+<li class="toc-part">PART ONE</li>
+<li><a href="ch2.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch3.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch4.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch5.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch6.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch7.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch8.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch9.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch10.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch11.html" class="toc-link">CHAPTER TEN</a></li>
+<li class="toc-part">PART TWO</li>
+<li><a href="ch12.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch13.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch14.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch15.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch16.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch17.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch18.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch19.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch20.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch21.html" class="toc-link">CHAPTER TEN</a></li>
+<li><a href="ch22.html" class="toc-link">CHAPTER ELEVEN</a></li>
+<li><a href="ch23.html" class="toc-link">CHAPTER TWELVE</a></li>
+<li><a href="ch24.html" class="toc-link">CHAPTER THIRTEEN</a></li>
+<li><a href="ch25.html" class="toc-link">CHAPTER FOURTEEN</a></li>
+<li><a href="ch26.html" class="toc-link">CHAPTER FIFTEEN</a></li>
+<li><a href="ch27.html" class="toc-link">CHAPTER SIXTEEN</a></li>
+<li><a href="ch28.html" class="toc-link">CHAPTER SEVENTEEN</a></li>
+<li><a href="ch29.html" class="toc-link">CHAPTER EIGHTEEN</a></li>
+<li><a href="ch30.html" class="toc-link">CHAPTER NINETEEN</a></li>
+<li><a href="ch31.html" class="toc-link">CHAPTER TWENTY</a></li>
+<li><a href="ch32.html" class="toc-link">CHAPTER TWENTY-ONE</a></li>
+<li><a href="ch33.html" class="toc-link">CHAPTER TWENTY-TWO</a></li>
+<li><a href="ch34.html" class="toc-link">CHAPTER TWENTY-THREE</a></li>
+<li><a href="ch35.html" class="toc-link">CHAPTER TWENTY-FOUR</a></li>
+<li><a href="ch36.html" class="toc-link">CHAPTER TWENTY-FIVE</a></li>
+<li><a href="ch37.html" class="toc-link">CHAPTER TWENTY-SIX</a></li>
+<li><a href="ch38.html" class="toc-link">CHAPTER TWENTY-SEVEN</a></li>
+<li><a href="ch39.html" class="toc-link">CHAPTER TWENTY-EIGHT</a></li>
+<li><a href="ch40.html" class="toc-link">CHAPTER TWENTY-NINE</a></li>
+<li><a href="ch41.html" class="toc-link">CHAPTER THIRTY</a></li>
+<li><a href="ch42.html" class="toc-link">CHAPTER THIRTY-ONE</a></li>
+<li><a href="ch43.html" class="toc-link">CHAPTER THIRTY-TWO</a></li>
+<li><a href="ch44.html" class="toc-link">CHAPTER THIRTY-THREE</a></li>
+<li><a href="ch45.html" class="toc-link">CHAPTER THIRTY-FOUR</a></li>
+<li class="toc-part">PART FOUR</li>
+<li><a href="ch46.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch47.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch48.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch49.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch50.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch51.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch52.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch53.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch54.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch55.html" class="toc-link">CHAPTER TEN</a></li>
+<li><a href="ch56.html" class="toc-link">CHAPTER ELEVEN</a></li>
+<li><a href="ch57.html" class="toc-link">CHAPTER TWELVE</a></li>
+<li><a href="ch58.html" class="toc-link">CHAPTER THIRTEEN</a></li>
+<li><a href="ch59.html" class="toc-link">CHAPTER FOURTEEN</a></li>
+<li><a href="ch60.html" class="toc-link">CHAPTER FIFTEEN</a></li>
+<li><a href="ch61.html" class="toc-link">CHAPTER SIXTEEN</a></li>
+<li><a href="ch62.html" class="toc-link">CHAPTER SEVENTEEN</a></li>
+<li><a href="ch63.html" class="toc-link">CHAPTER EIGHTEEN</a></li>
+<li><a href="ch64.html" class="toc-link">CHAPTER NINETEEN</a></li>
+<li><a href="ch65.html" class="toc-link">CHAPTER TWENTY</a></li>
+<li><a href="ch66.html" class="toc-link">CHAPTER TWENTY-ONE</a></li>
+<li class="toc-part">PART FIVE</li>
+<li><a href="ch67.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch68.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch69.html" class="toc-link">CHAPTER THREE</a></li>
+
+    </ul>
+  </div>
+</nav>
+
+<div id="main">
+  <div id="cover">
+    <div class="cover-ornament">A Novel</div>
+    <h1 class="cover-title">
+      <span class="cover-the">The</span>
+      Silent Patient
+    </h1>
+    <div class="cover-divider"></div>
+    <div class="cover-author">Alex Michaelides</div>
+    <p class="cover-tagline">"But why does she not speak?" — Euripides, Alcestis</p>
+  </div>
+
+  <div class="font-controls">
+    FONT SIZE:
+    <button class="font-btn" onclick="changeFont(-1)">A−</button>
+    <button class="font-btn" onclick="changeFont(1)">A+</button>
+  </div>
+
+  <div id="chapters-wrap">
+
+<article class="chapter" id="ch56">
+
+<div class="chheader">
+<div class="partlabel">PART FOUR</div>
+<h2 class="chtitle">CHAPTER ELEVEN</h2>
+</div>
+<div class="chbody">
+<p>ALICIA SAT IN THE CHAIR opposite me in the therapy room. “Before we begin, I have some questions for you. A few things I’d like to clarify…” No reply. Alicia looked at me with that unreadable look of hers. “Specifically, I want to understand your silence. I want to know why you refused to speak.” Alicia seemed disappointed by the question. She turned and looked out the window. We sat like that in silence for a minute or so. I tried to contain the suspense I was feeling. Had the breakthrough been temporary? Would we now go on as before? I couldn’t let that happen. “Alicia. I know it’s difficult. But once you start talking to me, you’ll find it easier, I promise.” No response. “Try. Please. Don’t give up when you’ve made such progress. Keep going. Tell me … tell me why you wouldn’t speak.” Alicia turned back and stared at me with a chilly gaze. She spoke in a low voice: “Nothing … nothing to say.” “I’m not sure I believe that. I think there was too much too say.” A pause. A shrug. “Perhaps. Perhaps … you’re right.” “Go on.” She hesitated. “At first, when Gabriel … when he was dead—I couldn’t, I tried … but I couldn’t … talk. I opened my mouth—but no sound came out. Like in a dream … where you try to scream … but can’t.” “You were in a state of shock. But over the next few days, you must have found your voice returning to you…?” “By then … it seemed pointless. It was too late.” “Too late? To speak in your defense?”</p>
+<p>Alicia held me in her gaze, a cryptic smile on her lips. She didn’t speak. “Tell me why you started talking again.” “You know the answer.” “Do I?” “Because of you.” “Me?” I looked at her with surprise. “Because you came here.” “And that made a difference?” “All the difference—it made … all the difference.” Alicia lowered her voice and stared at me, unblinking. “I want you to understand—what happened to me. What it felt like. It’s important … you understand.” “I want to understand. That’s why you gave me the diary, isn’t it? Because you want me to understand. It seems to me the people who mattered most to you didn’t believe your story about the man. Perhaps you’re wondering … if I believe you.” “You believe me.” This was not a question but a simple statement of fact. I nodded. “Yes, I believe you. So why don’t we start there? The last diary entry you wrote described the man breaking into the house. What happened then?” “Nothing.” “Nothing?” She shook her head. “It wasn’t him.” “It wasn’t? Then who was it?” “It was Jean-Felix. He wanted—he had come to talk about the exhibition.” “Judging by your diary, it doesn’t seem you were in the right state of mind for visitors.” Alicia acknowledged this with a shrug. “Did he stay long?” “No. I asked him to leave. He didn’t want to—he was upset. He shouted at me a bit—but he went after a while.”</p>
+<p>“And then? What happened after Jean-Felix left?” Alicia shook her head. “I don’t want to talk about that.” “No?” “Not yet.” Alicia’s eyes looked into mine for a moment. Then they darted to the window, considering the darkening sky beyond the bars. Something in the way she was tilting her head was almost coquettish, and the beginning of a smile was forming at the corner of her mouth. She’s enjoying this, I thought. Having me in her power. “What do you want to talk about?” I asked. “I don’t know. Nothing. I just want to talk.” So we talked. We talked about Lydia and Paul, and about her mother, and the summer she died. We talked about Alicia’s childhood—and mine. I told her about my father, and growing up in that house; she seemed curious to know as much as possible about my past and what had shaped me and made me who I am. I remember thinking, There’s no going back now. We were crashing through every last boundary between therapist and patient. Soon it would be impossible to tell who was who.</p>
+</div>
+
+</article>
+
+        <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
+            <a href="ch55.html" style="padding: 10px 20px; background: #c8922a; color: #1a1208; text-decoration: none; border-radius: 4px; margin-right: 10px; font-weight: bold;">&laquo; Previous</a>
+            <a href="index.html" style="padding: 10px 20px; background: #f0e9d6; color: #1a1208; text-decoration: none; border-radius: 4px; border: 1px solid #c8922a; font-weight: bold;">Home</a>
+            <a href="ch57.html" style="padding: 10px 20px; background: #c8922a; color: #1a1208; text-decoration: none; border-radius: 4px; margin-left: 10px; font-weight: bold;">Next &raquo;</a>
+        </div>
+        
+
+  </div>
+</div>
+
+
+<script>
+// Font size
+let fontSize = 19;
+try { fontSize = parseInt(localStorage.getItem('tsp_fontSize') || '19'); } catch(e) {}
+function applyFont() {
+  document.querySelectorAll('.chbody').forEach(el => el.style.fontSize = fontSize + 'px');
+}
+function changeFont(d) {
+  fontSize = Math.min(28, Math.max(14, fontSize + d));
+  try { localStorage.setItem('tsp_fontSize', fontSize); } catch(e) {}
+  applyFont();
+}
+applyFont();
+
+// TOC active link on scroll
+const sections = document.querySelectorAll('section.chapter');
+const links = document.querySelectorAll('.toc-link');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+      if (active) {
+        active.classList.add('active');
+        active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// TOC click smooth scroll
+links.forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(link.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+</body>
+</html>

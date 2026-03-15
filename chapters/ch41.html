@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Silent Patient — Alex Michaelides</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink: #1a1208;
+  --paper: #f7f2e8;
+  --paper2: #f0e9d6;
+  --gold: #c8922a;
+  --gold2: #e8b84b;
+  --red: #8b1a1a;
+  --muted: #7a6e5f;
+  --border: #d4c49a;
+  --sidebar-w: 260px;
+}
+
+/* CRITICAL: no sticky/fixed elements — these cause Read Aloud to jump */
+html, body {
+  height: auto;
+  overflow: auto;
+  scroll-behavior: auto;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 19px;
+  line-height: 1.85;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR — static, not fixed ── */
+#sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--ink);
+  border-right: 2px solid var(--gold);
+  /* NOT fixed — just a normal flex column */
+  position: static;
+  align-self: flex-start;
+  /* Sticky within scroll — safe for Read Aloud */
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+#sidebar::-webkit-scrollbar { width: 4px; }
+#sidebar::-webkit-scrollbar-track { background: transparent; }
+#sidebar::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+
+.sidebar-header {
+  padding: 28px 20px 20px;
+  border-bottom: 1px solid rgba(200,146,42,0.3);
+}
+.book-title {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--gold2);
+  text-transform: uppercase;
+  line-height: 1.4;
+  margin-bottom: 5px;
+}
+.book-author {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--muted);
+}
+.toc-nav { padding: 16px 0 40px; }
+.toc-nav ul { list-style: none; }
+li.toc-part {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+  text-transform: uppercase;
+  padding: 16px 20px 4px;
+  opacity: 0.6;
+}
+.toc-link {
+  display: block;
+  padding: 5px 20px;
+  font-size: 13px;
+  color: #b0a080;
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all 0.2s;
+}
+.toc-link:hover {
+  color: var(--gold2);
+  background: rgba(200,146,42,0.06);
+}
+.toc-link.active {
+  color: var(--gold2);
+  border-left-color: var(--gold);
+  padding-left: 26px;
+  background: rgba(200,146,42,0.08);
+}
+
+/* ── MAIN CONTENT ── */
+#main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Cover */
+#cover {
+  padding: 100px 60px 80px;
+  text-align: center;
+  background: var(--ink);
+  color: var(--paper);
+  border-bottom: 2px solid var(--gold);
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.cover-ornament {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 40px;
+}
+.cover-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(32px, 5vw, 60px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--paper);
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+.cover-the {
+  font-family: 'Crimson Pro', serif;
+  font-size: clamp(16px, 2.5vw, 26px);
+  font-style: italic;
+  font-weight: 300;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 4px;
+  letter-spacing: 0.12em;
+}
+.cover-divider {
+  width: 60px; height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  margin: 0 auto 20px;
+}
+.cover-author {
+  font-family: 'Crimson Pro', serif;
+  font-size: 18px;
+  font-style: italic;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+.cover-tagline {
+  font-size: 15px;
+  font-style: italic;
+  color: rgba(247,242,232,0.4);
+  max-width: 400px;
+}
+.cover-scroll { display: none; }
+
+/* Chapters */
+section.chapter {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 64px 40px 80px;
+  border-bottom: 1px solid var(--border);
+}
+.chheader {
+  text-align: center;
+  margin-bottom: 40px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.chheader::after {
+  content: '❧';
+  position: absolute;
+  bottom: -13px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--paper);
+  padding: 0 10px;
+  color: var(--gold);
+  font-size: 16px;
+}
+.partlabel {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.chtitle {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(16px, 2.5vw, 22px);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.08em;
+}
+.chbody p {
+  margin-bottom: 1.3em;
+  text-indent: 2em;
+}
+.chbody p:first-child {
+  text-indent: 0;
+}
+
+/* Font controls */
+.font-controls {
+  position: sticky;
+  top: 0;
+  background: var(--paper2);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  z-index: 10;
+}
+.font-btn {
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 3px 10px;
+  border-radius: 2px;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+.font-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+::-webkit-scrollbar { width: 7px; }
+::-webkit-scrollbar-track { background: var(--paper2); }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 4px; }
+
+@media (max-width: 768px) {
+  #sidebar { display: none; }
+  section.chapter { padding: 40px 20px 60px; }
+  .font-controls { padding: 8px 20px; }
+}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="book-title">The Silent Patient</div>
+    <div class="book-author">Alex Michaelides</div>
+  </div>
+  <div class="toc-nav">
+    <ul id="toc-list">
+<li><a href="ch1.html" class="toc-link">PROLOGUE</a></li>
+<li class="toc-part">PART ONE</li>
+<li><a href="ch2.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch3.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch4.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch5.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch6.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch7.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch8.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch9.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch10.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch11.html" class="toc-link">CHAPTER TEN</a></li>
+<li class="toc-part">PART TWO</li>
+<li><a href="ch12.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch13.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch14.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch15.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch16.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch17.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch18.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch19.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch20.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch21.html" class="toc-link">CHAPTER TEN</a></li>
+<li><a href="ch22.html" class="toc-link">CHAPTER ELEVEN</a></li>
+<li><a href="ch23.html" class="toc-link">CHAPTER TWELVE</a></li>
+<li><a href="ch24.html" class="toc-link">CHAPTER THIRTEEN</a></li>
+<li><a href="ch25.html" class="toc-link">CHAPTER FOURTEEN</a></li>
+<li><a href="ch26.html" class="toc-link">CHAPTER FIFTEEN</a></li>
+<li><a href="ch27.html" class="toc-link">CHAPTER SIXTEEN</a></li>
+<li><a href="ch28.html" class="toc-link">CHAPTER SEVENTEEN</a></li>
+<li><a href="ch29.html" class="toc-link">CHAPTER EIGHTEEN</a></li>
+<li><a href="ch30.html" class="toc-link">CHAPTER NINETEEN</a></li>
+<li><a href="ch31.html" class="toc-link">CHAPTER TWENTY</a></li>
+<li><a href="ch32.html" class="toc-link">CHAPTER TWENTY-ONE</a></li>
+<li><a href="ch33.html" class="toc-link">CHAPTER TWENTY-TWO</a></li>
+<li><a href="ch34.html" class="toc-link">CHAPTER TWENTY-THREE</a></li>
+<li><a href="ch35.html" class="toc-link">CHAPTER TWENTY-FOUR</a></li>
+<li><a href="ch36.html" class="toc-link">CHAPTER TWENTY-FIVE</a></li>
+<li><a href="ch37.html" class="toc-link">CHAPTER TWENTY-SIX</a></li>
+<li><a href="ch38.html" class="toc-link">CHAPTER TWENTY-SEVEN</a></li>
+<li><a href="ch39.html" class="toc-link">CHAPTER TWENTY-EIGHT</a></li>
+<li><a href="ch40.html" class="toc-link">CHAPTER TWENTY-NINE</a></li>
+<li><a href="ch41.html" class="toc-link">CHAPTER THIRTY</a></li>
+<li><a href="ch42.html" class="toc-link">CHAPTER THIRTY-ONE</a></li>
+<li><a href="ch43.html" class="toc-link">CHAPTER THIRTY-TWO</a></li>
+<li><a href="ch44.html" class="toc-link">CHAPTER THIRTY-THREE</a></li>
+<li><a href="ch45.html" class="toc-link">CHAPTER THIRTY-FOUR</a></li>
+<li class="toc-part">PART FOUR</li>
+<li><a href="ch46.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch47.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch48.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch49.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch50.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch51.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch52.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch53.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch54.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch55.html" class="toc-link">CHAPTER TEN</a></li>
+<li><a href="ch56.html" class="toc-link">CHAPTER ELEVEN</a></li>
+<li><a href="ch57.html" class="toc-link">CHAPTER TWELVE</a></li>
+<li><a href="ch58.html" class="toc-link">CHAPTER THIRTEEN</a></li>
+<li><a href="ch59.html" class="toc-link">CHAPTER FOURTEEN</a></li>
+<li><a href="ch60.html" class="toc-link">CHAPTER FIFTEEN</a></li>
+<li><a href="ch61.html" class="toc-link">CHAPTER SIXTEEN</a></li>
+<li><a href="ch62.html" class="toc-link">CHAPTER SEVENTEEN</a></li>
+<li><a href="ch63.html" class="toc-link">CHAPTER EIGHTEEN</a></li>
+<li><a href="ch64.html" class="toc-link">CHAPTER NINETEEN</a></li>
+<li><a href="ch65.html" class="toc-link">CHAPTER TWENTY</a></li>
+<li><a href="ch66.html" class="toc-link">CHAPTER TWENTY-ONE</a></li>
+<li class="toc-part">PART FIVE</li>
+<li><a href="ch67.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch68.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch69.html" class="toc-link">CHAPTER THREE</a></li>
+
+    </ul>
+  </div>
+</nav>
+
+<div id="main">
+  <div id="cover">
+    <div class="cover-ornament">A Novel</div>
+    <h1 class="cover-title">
+      <span class="cover-the">The</span>
+      Silent Patient
+    </h1>
+    <div class="cover-divider"></div>
+    <div class="cover-author">Alex Michaelides</div>
+    <p class="cover-tagline">"But why does she not speak?" — Euripides, Alcestis</p>
+  </div>
+
+  <div class="font-controls">
+    FONT SIZE:
+    <button class="font-btn" onclick="changeFont(-1)">A−</button>
+    <button class="font-btn" onclick="changeFont(1)">A+</button>
+  </div>
+
+  <div id="chapters-wrap">
+
+<article class="chapter" id="ch41">
+
+<div class="chheader">
+<div class="partlabel">PART TWO</div>
+<h2 class="chtitle">CHAPTER THIRTY</h2>
+</div>
+<div class="chbody">
+<p>BARBIE’S HOUSE WAS ONE OF SEVERAL ACROSS the road from Hampstead Heath, overlooking one of the ponds. It was large and, given its location, probably fantastically overpriced. Barbie had lived in Hampstead for several years before Gabriel and Alicia moved in next door. Her ex-husband was an investment banker and had commuted between London and New York until they divorced. He found himself a younger, blonder version of his wife—and Barbie got the house. “So everyone was happy,” she said with a laugh. “Particularly me.” Barbie’s house was painted pale blue, in contrast to the other houses on the street, which were white. Her front garden was decorated with little trees and potted plants. Barbie greeted me at the door. “Hi, honey. I’m glad you’re on time. That’s a good sign. This way.” She led me through the hallway to the living room, talking the entire time. I only partially listened and took in my surroundings. The house smelled like a greenhouse; it was full of plants and flowers—roses, lilies, orchids, everywhere you looked. Paintings, mirrors, and framed photographs were crammed together on the walls; little statues, vases, and other objets d’art competed for space on tables and dressers. All expensive items, but crammed together like this, they looked like junk. Taken as a representation of Barbie’s mind, it suggested a disordered inner world, to say the least. It made me think of chaos, clutter, greed—insatiable hunger. I wondered what her childhood had been like. I shifted a couple of tasseled cushions to make room and sat on the uncomfortable large sofa. Barbie opened a drinks cabinet and pulled out a couple of glasses. “Now, what do you want to drink? You look like a whiskey drinker to me. My ex-husband drank a gallon of whiskey a day. He said he needed it to put up with me.” She laughed. “I’m a wine connoisseur, actually. I went on a course in the Bordeaux region in France. I have an excellent nose.” She paused for breath and I took the opportunity to speak while I had the chance. “I don’t like whiskey. I’m not much of a drinker … just the odd beer, really.”</p>
+<p>“Oh.” Barbie looked rather annoyed. “I don’t have any beer.” “Well, that’s fine, I don’t need a drink—” “Well, I do, honey. It’s been one of those days.” Barbie poured herself a large glass of red wine and curled up in the armchair as if she were settling in for a good chat. “I’m all yours.” She smiled flirtatiously. “What do you want to know?” “I have couple of questions, if that’s all right.” “Well, fire away.” “Did Alicia ever mention seeing a doctor?” “A doctor?” Barbie seemed surprised by the question. “You mean a shrink?” “No, I mean a medical doctor.” “Oh, well, I don’t…” Barbie hesitated. “Actually, now that you mention it, yes, there was someone she was seeing.…” “Do you know the name?” “No, I don’t—but I remember I told her about my doctor, Dr. Monks, who’s just incredible. He only has to look at you to see what’s wrong with you straightaway, and he tells you exactly what to eat. It’s amazing.” A long and complicated explanation of the dietary demands by Barbie’s doctor followed, and an insistence I pay him a visit soon. I was starting to lose patience. It took some effort to get her back on track. “You saw Alicia on the day of the murder?” “Yes, just a few hours before it happened.” Barbie paused to gulp some more wine. “I went over to see her. I used to pop over all the time, for coffee —well, she drank coffee, I usually took a bottle of something. We’d talk for hours. We were so close, you know.” So you keep saying, I thought. But I had already diagnosed Barbie as almost entirely narcissistic; I doubted she was able to relate to others except as a function of her own needs. I imagined Alicia didn’t do much talking during these visits. “How would you describe her mental state that afternoon?” Barbie shrugged. “She seemed fine. She had a bad headache, that was all.”</p>
+<p>“She wasn’t on edge at all?” “Should she be?” “Well, given the circumstances…” Barbie gave me an astonished look. “You don’t think she was guilty, do you?” She laughed. “Oh, honey—I thought you were smarter than that.” “I’m afraid I don’t—” “Alicia was no way tough enough to kill anyone. She wasn’t a killer. Take it from me. She’s innocent. I’m a hundred percent sure.” “I’m curious how you can be so positive, given the evidence—” “I don’t give a shit about that. I’ve got my own evidence.” “You do?” “You bet. But first … I need to know if I can trust you.” Barbie’s eyes searched mine hungrily. I met her gaze steadily. Then she came out with it, just like that: “You see, there was a man.” “A man?” “Yes. Watching.” I was a little taken aback and immediately alert. “What do you mean, watching?” “Just what I said. Watching. I told the police, but they didn’t seem interested. They made up their minds the moment they found Alicia with Gabriel’s body and the gun. They didn’t want to listen to any other story.” “What story—exactly?” “I’ll tell you. And you’ll see why I wanted you to come over tonight. It’s worth hearing.” Just get on with it, I thought. But I said nothing and smiled encouragingly. She refilled her glass. “It started a couple of weeks before the murder. I went over to see Alicia, and we had a drink, and I noticed she was quieter than usual—I said, ‘Are you okay?’ And she started crying. I’d never seen her like that before. She was crying her eyes out. She was normally so reserved, you know … but that day she just let go. She was a mess, honey, a real mess.”</p>
+<p>“What did she say?” “She asked me if I’d noticed anyone hanging around in the neighborhood. She’d seen a man on the street, watching her.” Barbie hesitated. “I’ll show you. She texted this to me.” Barbie’s manicured hands stretched for her phone, and she searched through her photos on it. She thrust the phone at my face. I stared at it. It took me a second to make sense of what I was seeing. A blurred photograph of a tree. “What is it?” “What does it look like?” “A tree?” “Behind the tree.” Behind the tree was a gray blob—it could have been anything from a lamppost to a large dog. “It’s a man. You can see his outline quite distinctly.” I wasn’t convinced but didn’t argue. I didn’t want Barbie to get distracted. “Keep going.” “That’s it.” “But what happened?” Barbie shrugged. “Nothing. I told Alicia to tell the cops—and that was when I found out she hadn’t even told her husband about it.” “She hadn’t told Gabriel? Why not?” “I don’t know. I got the feeling he wasn’t all that sympathetic a person. Anyway. I insisted she tell the police. I mean, what about me? What about my safety? A prowler’s outside—and I’m a woman living alone, you know? I want to feel safe when I go to bed at night.” “Did Alicia follow your advice?” Barbie shook her head. “No, she did not. A few days later, she told me she’d talked it over with her husband and decided she was imagining it all. She told me to forget it—and asked me not to mention it to Gabriel if I saw him. I don’t know, the whole thing stank to me. And she asked me to delete the photo. I didn’t—I showed it to the police when she was arrested. But they</p>
+<p>weren’t interested. They’d already made up their minds. But I’m positive there’s more to it. Can I tell you…?” She lowered her voice to a dramatic whisper. “Alicia was scared.” Barbie left a dramatic pause, finishing her wine. She reached for the bottle. “Sure you don’t want a drink?” I refused again, thanked her, made my excuses, and left. There was no point in staying further; she had nothing else to tell me. I had more than enough to think about. It was dark when I left her house. I paused a moment outside the house next door—Alicia’s old house. It had been sold soon after the trial, and a Japanese couple lived there. They were—according to Barbie—most unfriendly. She had made several advances, which they had resisted. I wondered how I’d feel if Barbie lived next door to me, endlessly popping over. I wondered how Alicia felt about her. I lit a cigarette and thought about what I had just heard. So Alicia told Barbie she was being watched. The police had presumably thought Barbie was attention-seeking and making it up, which was why they had ignored her story. I wasn’t surprised; Barbie was hard to take seriously. It meant that Alicia had been scared enough to appeal to Barbie for help— and afterward to Gabriel. What then? Did Alicia confide in someone else? I needed to know. I had a sudden image of myself as a child. A little boy close to bursting with anxiety, holding in all my terrors, all my pain; pacing endlessly, restless, scared; alone with the fears of my crazy father. No one to tell. No one who’d listen. Alicia must have felt similarly desperate, or she’d never have confided in Barbie. I shivered—and sensed a pair of eyes on the back of my head. I spun around—but no one was there. I was alone. The street was empty, shadowy, and silent.</p>
+</div>
+
+</article>
+
+        <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
+            <a href="ch40.html" style="padding: 10px 20px; background: #c8922a; color: #1a1208; text-decoration: none; border-radius: 4px; margin-right: 10px; font-weight: bold;">&laquo; Previous</a>
+            <a href="index.html" style="padding: 10px 20px; background: #f0e9d6; color: #1a1208; text-decoration: none; border-radius: 4px; border: 1px solid #c8922a; font-weight: bold;">Home</a>
+            <a href="ch42.html" style="padding: 10px 20px; background: #c8922a; color: #1a1208; text-decoration: none; border-radius: 4px; margin-left: 10px; font-weight: bold;">Next &raquo;</a>
+        </div>
+        
+
+  </div>
+</div>
+
+
+<script>
+// Font size
+let fontSize = 19;
+try { fontSize = parseInt(localStorage.getItem('tsp_fontSize') || '19'); } catch(e) {}
+function applyFont() {
+  document.querySelectorAll('.chbody').forEach(el => el.style.fontSize = fontSize + 'px');
+}
+function changeFont(d) {
+  fontSize = Math.min(28, Math.max(14, fontSize + d));
+  try { localStorage.setItem('tsp_fontSize', fontSize); } catch(e) {}
+  applyFont();
+}
+applyFont();
+
+// TOC active link on scroll
+const sections = document.querySelectorAll('section.chapter');
+const links = document.querySelectorAll('.toc-link');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+      if (active) {
+        active.classList.add('active');
+        active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// TOC click smooth scroll
+links.forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(link.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+</body>
+</html>

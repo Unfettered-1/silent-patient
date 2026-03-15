@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Silent Patient — Alex Michaelides</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink: #1a1208;
+  --paper: #f7f2e8;
+  --paper2: #f0e9d6;
+  --gold: #c8922a;
+  --gold2: #e8b84b;
+  --red: #8b1a1a;
+  --muted: #7a6e5f;
+  --border: #d4c49a;
+  --sidebar-w: 260px;
+}
+
+/* CRITICAL: no sticky/fixed elements — these cause Read Aloud to jump */
+html, body {
+  height: auto;
+  overflow: auto;
+  scroll-behavior: auto;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 19px;
+  line-height: 1.85;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR — static, not fixed ── */
+#sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--ink);
+  border-right: 2px solid var(--gold);
+  /* NOT fixed — just a normal flex column */
+  position: static;
+  align-self: flex-start;
+  /* Sticky within scroll — safe for Read Aloud */
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+#sidebar::-webkit-scrollbar { width: 4px; }
+#sidebar::-webkit-scrollbar-track { background: transparent; }
+#sidebar::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+
+.sidebar-header {
+  padding: 28px 20px 20px;
+  border-bottom: 1px solid rgba(200,146,42,0.3);
+}
+.book-title {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--gold2);
+  text-transform: uppercase;
+  line-height: 1.4;
+  margin-bottom: 5px;
+}
+.book-author {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--muted);
+}
+.toc-nav { padding: 16px 0 40px; }
+.toc-nav ul { list-style: none; }
+li.toc-part {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+  text-transform: uppercase;
+  padding: 16px 20px 4px;
+  opacity: 0.6;
+}
+.toc-link {
+  display: block;
+  padding: 5px 20px;
+  font-size: 13px;
+  color: #b0a080;
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all 0.2s;
+}
+.toc-link:hover {
+  color: var(--gold2);
+  background: rgba(200,146,42,0.06);
+}
+.toc-link.active {
+  color: var(--gold2);
+  border-left-color: var(--gold);
+  padding-left: 26px;
+  background: rgba(200,146,42,0.08);
+}
+
+/* ── MAIN CONTENT ── */
+#main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Cover */
+#cover {
+  padding: 100px 60px 80px;
+  text-align: center;
+  background: var(--ink);
+  color: var(--paper);
+  border-bottom: 2px solid var(--gold);
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.cover-ornament {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 40px;
+}
+.cover-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(32px, 5vw, 60px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--paper);
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+.cover-the {
+  font-family: 'Crimson Pro', serif;
+  font-size: clamp(16px, 2.5vw, 26px);
+  font-style: italic;
+  font-weight: 300;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 4px;
+  letter-spacing: 0.12em;
+}
+.cover-divider {
+  width: 60px; height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  margin: 0 auto 20px;
+}
+.cover-author {
+  font-family: 'Crimson Pro', serif;
+  font-size: 18px;
+  font-style: italic;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+.cover-tagline {
+  font-size: 15px;
+  font-style: italic;
+  color: rgba(247,242,232,0.4);
+  max-width: 400px;
+}
+.cover-scroll { display: none; }
+
+/* Chapters */
+section.chapter {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 64px 40px 80px;
+  border-bottom: 1px solid var(--border);
+}
+.chheader {
+  text-align: center;
+  margin-bottom: 40px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.chheader::after {
+  content: '❧';
+  position: absolute;
+  bottom: -13px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--paper);
+  padding: 0 10px;
+  color: var(--gold);
+  font-size: 16px;
+}
+.partlabel {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.chtitle {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(16px, 2.5vw, 22px);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.08em;
+}
+.chbody p {
+  margin-bottom: 1.3em;
+  text-indent: 2em;
+}
+.chbody p:first-child {
+  text-indent: 0;
+}
+
+/* Font controls */
+.font-controls {
+  position: sticky;
+  top: 0;
+  background: var(--paper2);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  z-index: 10;
+}
+.font-btn {
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 3px 10px;
+  border-radius: 2px;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+.font-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+::-webkit-scrollbar { width: 7px; }
+::-webkit-scrollbar-track { background: var(--paper2); }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 4px; }
+
+@media (max-width: 768px) {
+  #sidebar { display: none; }
+  section.chapter { padding: 40px 20px 60px; }
+  .font-controls { padding: 8px 20px; }
+}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="book-title">The Silent Patient</div>
+    <div class="book-author">Alex Michaelides</div>
+  </div>
+  <div class="toc-nav">
+    <ul id="toc-list">
+<li><a href="ch1.html" class="toc-link">PROLOGUE</a></li>
+<li class="toc-part">PART ONE</li>
+<li><a href="ch2.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch3.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch4.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch5.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch6.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch7.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch8.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch9.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch10.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch11.html" class="toc-link">CHAPTER TEN</a></li>
+<li class="toc-part">PART TWO</li>
+<li><a href="ch12.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch13.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch14.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch15.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch16.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch17.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch18.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch19.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch20.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch21.html" class="toc-link">CHAPTER TEN</a></li>
+<li><a href="ch22.html" class="toc-link">CHAPTER ELEVEN</a></li>
+<li><a href="ch23.html" class="toc-link">CHAPTER TWELVE</a></li>
+<li><a href="ch24.html" class="toc-link">CHAPTER THIRTEEN</a></li>
+<li><a href="ch25.html" class="toc-link">CHAPTER FOURTEEN</a></li>
+<li><a href="ch26.html" class="toc-link">CHAPTER FIFTEEN</a></li>
+<li><a href="ch27.html" class="toc-link">CHAPTER SIXTEEN</a></li>
+<li><a href="ch28.html" class="toc-link">CHAPTER SEVENTEEN</a></li>
+<li><a href="ch29.html" class="toc-link">CHAPTER EIGHTEEN</a></li>
+<li><a href="ch30.html" class="toc-link">CHAPTER NINETEEN</a></li>
+<li><a href="ch31.html" class="toc-link">CHAPTER TWENTY</a></li>
+<li><a href="ch32.html" class="toc-link">CHAPTER TWENTY-ONE</a></li>
+<li><a href="ch33.html" class="toc-link">CHAPTER TWENTY-TWO</a></li>
+<li><a href="ch34.html" class="toc-link">CHAPTER TWENTY-THREE</a></li>
+<li><a href="ch35.html" class="toc-link">CHAPTER TWENTY-FOUR</a></li>
+<li><a href="ch36.html" class="toc-link">CHAPTER TWENTY-FIVE</a></li>
+<li><a href="ch37.html" class="toc-link">CHAPTER TWENTY-SIX</a></li>
+<li><a href="ch38.html" class="toc-link">CHAPTER TWENTY-SEVEN</a></li>
+<li><a href="ch39.html" class="toc-link">CHAPTER TWENTY-EIGHT</a></li>
+<li><a href="ch40.html" class="toc-link">CHAPTER TWENTY-NINE</a></li>
+<li><a href="ch41.html" class="toc-link">CHAPTER THIRTY</a></li>
+<li><a href="ch42.html" class="toc-link">CHAPTER THIRTY-ONE</a></li>
+<li><a href="ch43.html" class="toc-link">CHAPTER THIRTY-TWO</a></li>
+<li><a href="ch44.html" class="toc-link">CHAPTER THIRTY-THREE</a></li>
+<li><a href="ch45.html" class="toc-link">CHAPTER THIRTY-FOUR</a></li>
+<li class="toc-part">PART FOUR</li>
+<li><a href="ch46.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch47.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch48.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch49.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch50.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch51.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch52.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch53.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch54.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch55.html" class="toc-link">CHAPTER TEN</a></li>
+<li><a href="ch56.html" class="toc-link">CHAPTER ELEVEN</a></li>
+<li><a href="ch57.html" class="toc-link">CHAPTER TWELVE</a></li>
+<li><a href="ch58.html" class="toc-link">CHAPTER THIRTEEN</a></li>
+<li><a href="ch59.html" class="toc-link">CHAPTER FOURTEEN</a></li>
+<li><a href="ch60.html" class="toc-link">CHAPTER FIFTEEN</a></li>
+<li><a href="ch61.html" class="toc-link">CHAPTER SIXTEEN</a></li>
+<li><a href="ch62.html" class="toc-link">CHAPTER SEVENTEEN</a></li>
+<li><a href="ch63.html" class="toc-link">CHAPTER EIGHTEEN</a></li>
+<li><a href="ch64.html" class="toc-link">CHAPTER NINETEEN</a></li>
+<li><a href="ch65.html" class="toc-link">CHAPTER TWENTY</a></li>
+<li><a href="ch66.html" class="toc-link">CHAPTER TWENTY-ONE</a></li>
+<li class="toc-part">PART FIVE</li>
+<li><a href="ch67.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch68.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch69.html" class="toc-link">CHAPTER THREE</a></li>
+
+    </ul>
+  </div>
+</nav>
+
+<div id="main">
+  <div id="cover">
+    <div class="cover-ornament">A Novel</div>
+    <h1 class="cover-title">
+      <span class="cover-the">The</span>
+      Silent Patient
+    </h1>
+    <div class="cover-divider"></div>
+    <div class="cover-author">Alex Michaelides</div>
+    <p class="cover-tagline">"But why does she not speak?" — Euripides, Alcestis</p>
+  </div>
+
+  <div class="font-controls">
+    FONT SIZE:
+    <button class="font-btn" onclick="changeFont(-1)">A−</button>
+    <button class="font-btn" onclick="changeFont(1)">A+</button>
+  </div>
+
+  <div id="chapters-wrap">
+
+<article class="chapter" id="ch12">
+
+<div class="chheader">
+<div class="partlabel">PART TWO</div>
+<h2 class="chtitle">CHAPTER ONE</h2>
+</div>
+<div class="chbody">
+<p>Alicia Berenson’s Diary JULY 16 I never thought I’d be longing for rain. We’re into our fourth week of the heat wave, and it feels like an endurance test. Each day seems hotter than the last. It doesn’t feel like England. More like a foreign country—Greece or somewhere. I’m writing this on Hampstead Heath. The whole park is strewn with red- faced, semi-naked bodies, like a beach or a battlefield, on blankets or benches or spread out on the grass. I’m sitting under a tree, in the shade. It’s six o’clock, and it has started to cool down. The sun is low and red in a golden sky—the park looks different in this light—darker shadows, brighter colors. The grass looks like it’s on fire, flickering flames under my feet. I took off my shoes on my way here and walked barefoot. It reminded me of when I was little and I’d play outside. It reminded me of another summer, hot like this one—the summer Mum died—playing outside with Paul, cycling on our bikes through golden fields dotted with wild daisies, exploring abandoned houses and haunted orchards. In my memory that summer lasts forever. I remember Mum and those colorful tops she’d wear, with the yellow stringy straps, so flimsy and delicate—just like her. She was so thin, like a little bird. She would put on the radio and pick me up and dance me around to pop songs on the radio. I remember how she smelled of shampoo and cigarettes and Nivea hand cream, always with an undertone of vodka. How old was she then? Twenty-eight? Twenty-nine? She was younger then than I am now. That’s an odd thought. On my way here I saw a small bird on the path, lying by the roots of a tree. I thought it must have fallen from its nest. It wasn’t moving and I wondered if it had broken its wings. I stroked its head gently with my finger. It didn’t react. I nudged it and turned it over—and the underside of the bird was gone, eaten away, leaving a cavity filled with maggots. Fat, white, slippery maggots … twisting, turning, writhing … I felt my stomach turn—I thought I was going to be sick. It was so foul, so disgusting—deathly. I can’t get it out of my mind.</p>
+<p>JULY 17 I’ve started taking refuge from the heat in an air-conditioned café on the high street—Café de l’Artista. It’s icy cold inside, like climbing into a fridge. There’s a table I like by the window, where I sit drinking iced coffee. Sometimes I read or sketch or make notes. Mostly I just let my mind drift, luxuriating in the coldness. The beautiful girl behind the counter stands there looking bored, staring at her phone, checking her watch, and sighing periodically. Yesterday afternoon, her sighs seemed especially long—and I realized she was waiting for me to go, so she could close up. I left reluctantly. Walking in this heat feels like wading through mud. I feel worn down, battered, beaten up by it. We’re not equipped for it, not in this country— Gabriel and I don’t have air-conditioning at home—who does? But without it, it’s impossible to sleep. At night we throw off the covers and lie there in the dark, naked, drenched in sweat. We leave the windows open, but there’s no hint of a breeze. Just hot dead air. I bought an electric fan yesterday. I set it up at the foot of the bed on top of the chest. Gabriel immediately started complaining. “It makes too much noise. We’ll never sleep.” “We can’t sleep anyway. At least we won’t be lying here in a sauna.” Gabriel grumbled, but he fell asleep before I did. I lay there listening to the fan. I like the sound it makes, a gentle whirring. I can shut my eyes and tune in to it and disappear. I’ve been carrying the fan around the house with me, plugging it in and unplugging it as I move around. This afternoon I took it down to the studio at the end of the garden. Having the fan made it just about bearable. But it’s still too hot to get much work done. I’m falling behind—but too hot to care. I did have a bit of a breakthrough—I finally understood what’s wrong with the Jesus picture. Why it’s not working. The problem isn’t with the composition— Jesus on the cross—the problem is it’s not a picture of Jesus at all. It doesn’t even look like Him—whatever He looked like. Because it’s not Jesus. It’s Gabriel. Incredible that I didn’t see it before. Somehow, without intending to, I’ve put Gabriel up there instead. It’s his face I’ve painted, his body. Isn’t that insane?</p>
+<p>So I must surrender to that—and do what the painting demands of me. I know now that when I have an agenda for a picture, a predetermined idea how it should turn out, it never works. It remains stillborn, lifeless. But if I’m really paying attention, really aware, I sometimes hear a whispering voice pointing me in the right direction. And if I give in to it, as an act of faith, it leads me somewhere unexpected, not where I intended, but somewhere intensely alive, glorious—and the result is independent of me, with a life force of its own. I suppose what scares me is giving in to the unknown. I like to know where I’m going. That’s why I always make so many sketches—trying to control the outcome—no wonder nothing comes to life—because I’m not really responding to what’s going on in front of me. I need to open my eyes and look —and be aware of life as it is happening, and not simply how I want it to be. Now I know it’s a portrait of Gabriel, I can go back to it. I can start again. I’ll ask him to pose for me. He hasn’t sat for me in a long time. I hope he likes the idea—and doesn’t think it’s sacrilegious or anything. He can be funny like that sometimes. JULY 18 I walked down the hill to Camden market this morning. I’ve not been there in years, not since Gabriel and I went together one afternoon in search of his lost youth. He used to go when he was a teenager, when he and his friends had been up all night, dancing, drinking, talking. They’d turn up at the market in the early morning and watch the traders set up their stalls and try and score some grass from the Rastafarian dealers hanging out on the bridge by Camden Lock. The dealers were no longer there when Gabriel and I went—to Gabriel’s dismay. “I don’t recognize it here anymore,” he said. “It’s a sanitized tourist trap.” Walking around today, I wondered if the problem wasn’t that the market had changed as the fact Gabriel had changed. It’s still populated by sixteen-year- olds, embracing the sunshine, sprawled on either side of the canal, a jumble of bodies—boys in rolled-up shorts with bare chests, girls in bikinis or bras— skin everywhere, burning, reddening flesh. The sexual energy was palpable— their hungry, impatient thirst for life. I felt a sudden desire for Gabriel—for his body and his strong legs, his thighs thick lain over mine. When we have sex, I always feel an insatiable hunger for him—for a kind of union between us—something that’s bigger than me, bigger than us, beyond words—</p>
+<p>something holy. Suddenly I caught sight of a homeless man, sitting by me on the pavement, staring at me. His trousers were tied up with string, his shoes held together with tape. His skin had sores and a bumpy rash across his face. I felt a sudden sadness and revulsion. He stank of stale sweat and urine. For a second I thought he spoke to me. But he was just swearing to himself under his breath —“fucking” this and “fucking” that. I fished for some change in my bag and gave it to him. Then I walked home, back up the hill, slowly, step by step. It seemed much steeper now. It took forever in the sweltering heat. For some reason I couldn’t stop thinking about the homeless man. Apart from pity, there was another feeling, unnamable somehow—a kind of fear. I pictured him as a baby in his mother’s arms. Did she ever imagine her baby would end up crazy, dirty and stinking, huddled on the pavement, muttering obscenities? I thought of my mother. Was she crazy? Is that why she did it? Why she strapped me into the passenger seat of her yellow mini and sped us toward that redbrick wall? I always liked that car, its cheerful canary yellow. The same yellow as in my paint box. Now I hate that color—every time I use it, I think of death. Why did she do it? I suppose I’ll never know. I used to think it was suicide. Now I think it was attempted murder. Because I was in the car too, wasn’t I? Sometimes I think I was the intended victim—it was me she was trying to kill, not herself. But that’s crazy. Why would she want to kill me? Tears collected in my eyes as I walked up the hill. I wasn’t crying for my mother—or myself—or even that poor homeless man. I was crying for all of us. There’s so much pain everywhere, and we just close our eyes to it. The truth is we’re all scared. We’re terrified of each other. I’m terrified of myself —and of my mother in me. Is her madness in my blood? Is it? Am I going to— No. Stop. Stop— I’m not writing about that. I’m not. JULY 20 Last night Gabriel and I went out for dinner. We usually do on Fridays. “Date night” he calls it, in a silly American accent. Gabriel always downplays his feelings and makes fun of anything he</p>
+<p>considers “soppy.” He likes to think of himself as cynical and unsentimental. But the truth is he’s a deeply romantic man—in his heart if not his speech. Actions speak louder than words, don’t they? And Gabriel’s actions make me feel totally loved. “Where do you want to go?” I asked. “Three guesses.” “Augusto’s?” “Got it in one.” Augusto’s is our local Italian restaurant, just down the road. It’s nothing special, but it’s our home from home, and we’ve spent many happy evenings there. We went around eight o’clock. The air-conditioning wasn’t working, so we sat by the open window in the hot, still, humid air and drank chilled dry white wine. I felt quite drunk by the end, and we laughed a lot, at nothing, really. We kissed outside the restaurant and had sex when we came home. Thankfully, Gabriel has come around to the portable fan, at least when we’re in bed. I positioned it in front of us, and we lay in the cool breeze, wrapped in each other’s arms. He stroked my hair and kissed me. “I love you,” he whispered. I didn’t say anything; I didn’t need to. He knows how I feel. But I ruined the mood, stupidly, clumsily—by asking if he would sit for me. “I want to paint you,” I said. “Again? You already did.” “That was four years ago. I want to paint you again.” “Uh-huh.” He didn’t look enthusiastic. “What kind of thing do you have in mind?” I hesitated—and then said it was for the Jesus picture. Gabriel sat up and gave a kind of strangled laugh. “Oh, come on, Alicia.” “What? “I don’t know about that, love. I don’t think so.” “Why not?” “Why do you think? Painting me on the cross? What are people going to say?”</p>
+<p>“Since when do you care what people say?” “I don’t, not about most things, but—I mean, they might think that’s how you see me.” I laughed. “I don’t think you’re the son of God, if that’s what you mean. It’s just an image—something that happened organically while I was painting. I haven’t consciously thought about it.” “Well, maybe you should think about it.” “Why? It’s not a comment on you, or our marriage.” “Then what is it?” “How should I know?” Gabriel laughed at this and rolled his eyes. “All right. Fuck it. If you want. We can try. I suppose you know what you’re doing.” That doesn’t sound like much of an endorsement. But I know Gabriel believes in me and my talent—I’d never be a painter if it weren’t for him. If he hadn’t needled and encouraged and bullied me, I’d never have kept going during those first few dead years after college, when I was painting walls with Jean- Felix. Before I met Gabriel, I lost my way, somehow—I lost myself. I don’t miss those druggy partiers who passed for friends during my twenties. I only ever saw them at night—they vanished at dawn, like vampires fleeing the light. When I met Gabriel, they faded away into nothing, and I didn’t even notice. I didn’t need them anymore; I didn’t need anyone now I had him. He saved me—like Jesus. Maybe that’s what the painting is about. Gabriel is my whole world—and has been since the day we met. I’ll love him no matter what he does, or what happens—no matter how much he upsets me—no matter how untidy or messy he is—how thoughtless, how selfish. I’ll take him just as he is. Until death do us part. JULY 21 Today Gabriel came and sat for me in the studio. “I’m not doing this for days again,” he said. “How long are we talking about?” “It’s going take more than one session to get it right.” “Is this just a ploy to spend more time together? If so, how about we skip the preamble and go to bed?”</p>
+<p>I laughed. “Maybe afterwards. If you’re good and don’t fidget too much.” I positioned him standing in front of the fan. His hair blew in the breeze. “How should I look?” He struck a pose. “Not like that. Just be yourself.” “Don’t you want me to adopt an anguished expression?” “I’m not sure Jesus was anguished. I don’t see him like that. Don’t pull any faces—just stand there. And don’t move.” “You’re the boss.” He stood for about twenty minutes. Then he broke the pose, saying he was tired. “Sit down, then. But don’t talk. I’m working on the face.” Gabriel sat on a chair and kept quiet while I worked. I enjoyed painting his face. It’s a good face. A strong jaw, high cheekbones, elegant nose. Sitting there with the spotlight on him, he looked like a Greek statue. A hero of some kind. But something was wrong. I don’t know what—maybe I was pushing too hard. I just couldn’t get the shape of his eyes right, nor the color. The first thing I ever noticed about Gabriel was the sparkle in his eyes—like a tiny diamond in each iris. But now for some reason I couldn’t catch it. Maybe I’m just not skilled enough—or maybe Gabriel has something extra that can’t be captured in paint. The eyes remained dead, lifeless. I could feel myself getting annoyed. “Fuck,” I said. “It’s not going well.” “Time for a break?” “Yeah. Time for a break.” “Shall we have sex?” That made me laugh. “Okay.” Gabriel jumped up, took hold of me, and kissed me. We made love in the studio, there on the floor. The whole time, I kept glancing at the lifeless eyes in Gabriel’s portrait. They were staring at me, burning into me. I had to turn away. But I could still feel them watching.</p>
+</div>
+
+</article>
+
+        <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
+            <a href="ch11.html" style="padding: 10px 20px; background: #c8922a; color: #1a1208; text-decoration: none; border-radius: 4px; margin-right: 10px; font-weight: bold;">&laquo; Previous</a>
+            <a href="index.html" style="padding: 10px 20px; background: #f0e9d6; color: #1a1208; text-decoration: none; border-radius: 4px; border: 1px solid #c8922a; font-weight: bold;">Home</a>
+            <a href="ch13.html" style="padding: 10px 20px; background: #c8922a; color: #1a1208; text-decoration: none; border-radius: 4px; margin-left: 10px; font-weight: bold;">Next &raquo;</a>
+        </div>
+        
+
+  </div>
+</div>
+
+
+<script>
+// Font size
+let fontSize = 19;
+try { fontSize = parseInt(localStorage.getItem('tsp_fontSize') || '19'); } catch(e) {}
+function applyFont() {
+  document.querySelectorAll('.chbody').forEach(el => el.style.fontSize = fontSize + 'px');
+}
+function changeFont(d) {
+  fontSize = Math.min(28, Math.max(14, fontSize + d));
+  try { localStorage.setItem('tsp_fontSize', fontSize); } catch(e) {}
+  applyFont();
+}
+applyFont();
+
+// TOC active link on scroll
+const sections = document.querySelectorAll('section.chapter');
+const links = document.querySelectorAll('.toc-link');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+      if (active) {
+        active.classList.add('active');
+        active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// TOC click smooth scroll
+links.forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(link.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+</body>
+</html>

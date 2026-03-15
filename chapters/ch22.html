@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Silent Patient — Alex Michaelides</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink: #1a1208;
+  --paper: #f7f2e8;
+  --paper2: #f0e9d6;
+  --gold: #c8922a;
+  --gold2: #e8b84b;
+  --red: #8b1a1a;
+  --muted: #7a6e5f;
+  --border: #d4c49a;
+  --sidebar-w: 260px;
+}
+
+/* CRITICAL: no sticky/fixed elements — these cause Read Aloud to jump */
+html, body {
+  height: auto;
+  overflow: auto;
+  scroll-behavior: auto;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 19px;
+  line-height: 1.85;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR — static, not fixed ── */
+#sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--ink);
+  border-right: 2px solid var(--gold);
+  /* NOT fixed — just a normal flex column */
+  position: static;
+  align-self: flex-start;
+  /* Sticky within scroll — safe for Read Aloud */
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+#sidebar::-webkit-scrollbar { width: 4px; }
+#sidebar::-webkit-scrollbar-track { background: transparent; }
+#sidebar::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+
+.sidebar-header {
+  padding: 28px 20px 20px;
+  border-bottom: 1px solid rgba(200,146,42,0.3);
+}
+.book-title {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--gold2);
+  text-transform: uppercase;
+  line-height: 1.4;
+  margin-bottom: 5px;
+}
+.book-author {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--muted);
+}
+.toc-nav { padding: 16px 0 40px; }
+.toc-nav ul { list-style: none; }
+li.toc-part {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+  text-transform: uppercase;
+  padding: 16px 20px 4px;
+  opacity: 0.6;
+}
+.toc-link {
+  display: block;
+  padding: 5px 20px;
+  font-size: 13px;
+  color: #b0a080;
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all 0.2s;
+}
+.toc-link:hover {
+  color: var(--gold2);
+  background: rgba(200,146,42,0.06);
+}
+.toc-link.active {
+  color: var(--gold2);
+  border-left-color: var(--gold);
+  padding-left: 26px;
+  background: rgba(200,146,42,0.08);
+}
+
+/* ── MAIN CONTENT ── */
+#main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Cover */
+#cover {
+  padding: 100px 60px 80px;
+  text-align: center;
+  background: var(--ink);
+  color: var(--paper);
+  border-bottom: 2px solid var(--gold);
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.cover-ornament {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 40px;
+}
+.cover-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(32px, 5vw, 60px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--paper);
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+.cover-the {
+  font-family: 'Crimson Pro', serif;
+  font-size: clamp(16px, 2.5vw, 26px);
+  font-style: italic;
+  font-weight: 300;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 4px;
+  letter-spacing: 0.12em;
+}
+.cover-divider {
+  width: 60px; height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  margin: 0 auto 20px;
+}
+.cover-author {
+  font-family: 'Crimson Pro', serif;
+  font-size: 18px;
+  font-style: italic;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+.cover-tagline {
+  font-size: 15px;
+  font-style: italic;
+  color: rgba(247,242,232,0.4);
+  max-width: 400px;
+}
+.cover-scroll { display: none; }
+
+/* Chapters */
+section.chapter {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 64px 40px 80px;
+  border-bottom: 1px solid var(--border);
+}
+.chheader {
+  text-align: center;
+  margin-bottom: 40px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.chheader::after {
+  content: '❧';
+  position: absolute;
+  bottom: -13px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--paper);
+  padding: 0 10px;
+  color: var(--gold);
+  font-size: 16px;
+}
+.partlabel {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.chtitle {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(16px, 2.5vw, 22px);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.08em;
+}
+.chbody p {
+  margin-bottom: 1.3em;
+  text-indent: 2em;
+}
+.chbody p:first-child {
+  text-indent: 0;
+}
+
+/* Font controls */
+.font-controls {
+  position: sticky;
+  top: 0;
+  background: var(--paper2);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  z-index: 10;
+}
+.font-btn {
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 3px 10px;
+  border-radius: 2px;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+.font-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+::-webkit-scrollbar { width: 7px; }
+::-webkit-scrollbar-track { background: var(--paper2); }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 4px; }
+
+@media (max-width: 768px) {
+  #sidebar { display: none; }
+  section.chapter { padding: 40px 20px 60px; }
+  .font-controls { padding: 8px 20px; }
+}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="book-title">The Silent Patient</div>
+    <div class="book-author">Alex Michaelides</div>
+  </div>
+  <div class="toc-nav">
+    <ul id="toc-list">
+<li><a href="ch1.html" class="toc-link">PROLOGUE</a></li>
+<li class="toc-part">PART ONE</li>
+<li><a href="ch2.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch3.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch4.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch5.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch6.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch7.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch8.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch9.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch10.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch11.html" class="toc-link">CHAPTER TEN</a></li>
+<li class="toc-part">PART TWO</li>
+<li><a href="ch12.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch13.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch14.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch15.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch16.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch17.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch18.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch19.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch20.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch21.html" class="toc-link">CHAPTER TEN</a></li>
+<li><a href="ch22.html" class="toc-link">CHAPTER ELEVEN</a></li>
+<li><a href="ch23.html" class="toc-link">CHAPTER TWELVE</a></li>
+<li><a href="ch24.html" class="toc-link">CHAPTER THIRTEEN</a></li>
+<li><a href="ch25.html" class="toc-link">CHAPTER FOURTEEN</a></li>
+<li><a href="ch26.html" class="toc-link">CHAPTER FIFTEEN</a></li>
+<li><a href="ch27.html" class="toc-link">CHAPTER SIXTEEN</a></li>
+<li><a href="ch28.html" class="toc-link">CHAPTER SEVENTEEN</a></li>
+<li><a href="ch29.html" class="toc-link">CHAPTER EIGHTEEN</a></li>
+<li><a href="ch30.html" class="toc-link">CHAPTER NINETEEN</a></li>
+<li><a href="ch31.html" class="toc-link">CHAPTER TWENTY</a></li>
+<li><a href="ch32.html" class="toc-link">CHAPTER TWENTY-ONE</a></li>
+<li><a href="ch33.html" class="toc-link">CHAPTER TWENTY-TWO</a></li>
+<li><a href="ch34.html" class="toc-link">CHAPTER TWENTY-THREE</a></li>
+<li><a href="ch35.html" class="toc-link">CHAPTER TWENTY-FOUR</a></li>
+<li><a href="ch36.html" class="toc-link">CHAPTER TWENTY-FIVE</a></li>
+<li><a href="ch37.html" class="toc-link">CHAPTER TWENTY-SIX</a></li>
+<li><a href="ch38.html" class="toc-link">CHAPTER TWENTY-SEVEN</a></li>
+<li><a href="ch39.html" class="toc-link">CHAPTER TWENTY-EIGHT</a></li>
+<li><a href="ch40.html" class="toc-link">CHAPTER TWENTY-NINE</a></li>
+<li><a href="ch41.html" class="toc-link">CHAPTER THIRTY</a></li>
+<li><a href="ch42.html" class="toc-link">CHAPTER THIRTY-ONE</a></li>
+<li><a href="ch43.html" class="toc-link">CHAPTER THIRTY-TWO</a></li>
+<li><a href="ch44.html" class="toc-link">CHAPTER THIRTY-THREE</a></li>
+<li><a href="ch45.html" class="toc-link">CHAPTER THIRTY-FOUR</a></li>
+<li class="toc-part">PART FOUR</li>
+<li><a href="ch46.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch47.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch48.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch49.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch50.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch51.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch52.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch53.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch54.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch55.html" class="toc-link">CHAPTER TEN</a></li>
+<li><a href="ch56.html" class="toc-link">CHAPTER ELEVEN</a></li>
+<li><a href="ch57.html" class="toc-link">CHAPTER TWELVE</a></li>
+<li><a href="ch58.html" class="toc-link">CHAPTER THIRTEEN</a></li>
+<li><a href="ch59.html" class="toc-link">CHAPTER FOURTEEN</a></li>
+<li><a href="ch60.html" class="toc-link">CHAPTER FIFTEEN</a></li>
+<li><a href="ch61.html" class="toc-link">CHAPTER SIXTEEN</a></li>
+<li><a href="ch62.html" class="toc-link">CHAPTER SEVENTEEN</a></li>
+<li><a href="ch63.html" class="toc-link">CHAPTER EIGHTEEN</a></li>
+<li><a href="ch64.html" class="toc-link">CHAPTER NINETEEN</a></li>
+<li><a href="ch65.html" class="toc-link">CHAPTER TWENTY</a></li>
+<li><a href="ch66.html" class="toc-link">CHAPTER TWENTY-ONE</a></li>
+<li class="toc-part">PART FIVE</li>
+<li><a href="ch67.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch68.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch69.html" class="toc-link">CHAPTER THREE</a></li>
+
+    </ul>
+  </div>
+</nav>
+
+<div id="main">
+  <div id="cover">
+    <div class="cover-ornament">A Novel</div>
+    <h1 class="cover-title">
+      <span class="cover-the">The</span>
+      Silent Patient
+    </h1>
+    <div class="cover-divider"></div>
+    <div class="cover-author">Alex Michaelides</div>
+    <p class="cover-tagline">"But why does she not speak?" — Euripides, Alcestis</p>
+  </div>
+
+  <div class="font-controls">
+    FONT SIZE:
+    <button class="font-btn" onclick="changeFont(-1)">A−</button>
+    <button class="font-btn" onclick="changeFont(1)">A+</button>
+  </div>
+
+  <div id="chapters-wrap">
+
+<article class="chapter" id="ch22">
+
+<div class="chheader">
+<div class="partlabel">PART TWO</div>
+<h2 class="chtitle">CHAPTER ELEVEN</h2>
+</div>
+<div class="chbody">
+<p>“I’M LOOKING FOR ELIF, Any idea where I can find her?” Yuri gave me a curious look. “Any reason you want her?” “Just to say a quick hello. I want to meet all the patients—let them know who I am, that I’m here.” Yuri looked doubtful. “Right. Well, don’t take it personally if she’s not very receptive.” He glanced at the clock on the wall. “It’s after half past, so she’s just out of art therapy. Your best bet is the recreation room.” “Thanks.” The recreation area was a large circular room furnished with battered couches, low tables, a bookcase full of tattered books no one wanted to read. It smelled of stale tea and old cigarette smoke that had stained the furnishings. A couple of patients were playing backgammon in a corner. Elif was alone at the pool table. I approached with a smile. “Hello, Elif.” She looked up with scared, mistrustful eyes. “What?” “Don’t worry, there’s nothing wrong. I just want a quick word.” “You ain’t my doctor. I already got one.” “I’m not a doctor. I’m a psychotherapist.” Elif grunted contemptuously. “I got one of them too.” I smiled, secretly relieved she was Indira’s patient and not mine. Up close Elif was even more intimidating. It wasn’t just her massive size, but also the rage etched deep into her face—a permanent scowl and angry black eyes, eyes that were quite clearly disturbed. She stank of sweat and the hand-rolled cigarettes she was always smoking, that had left her fingertips stained black and her nails and teeth a dark yellow. “I just wanted to ask you a couple of questions, if that’s okay—about Alicia.” Elif scowled and banged the cue on the table. She starting setting up the balls for another game. Then she stopped. She just stood there, looking distracted, in silence.</p>
+<p>“Elif?” She didn’t respond. I could tell from her expression what was wrong. “Are you hearing voices, Elif?” A suspicious glance. A shrug. “What are they saying?” “You ain’t safe. Telling me to watch out.” “I see. Quite right. You don’t know me—so it’s sensible not to trust me. Not yet. Perhaps, over time, that will change.” Elif gave me a look that suggested she doubted it. I nodded at the pool table. “Fancy a game?” “Nope.” “Why not?” She shrugged. “Other cue’s broke. They ain’t replaced it yet.” “But I can share your cue, can’t I?” The cue was resting on the table. I went to touch it—and she yanked it out of reach. “It’s my fuckin’ cue! Get your own!” I stepped back, unnerved by the ferocity of her reaction. She played a shot with considerable force. I watched her play for a moment. Then I tried again. “I was wondering if you could tell me about something that happened when Alicia was first admitted to the Grove. Do you remember?” Elif shook her head. “I read in her file that you had an altercation in the canteen. You were on the receiving end of an attack?” “Oh, yeah, yeah, she tried to kill me, innit? Tried to cut my fucking throat.” “According to the handover notes, a nurse saw you whisper something to Alicia before the attack. I was wondering what it was?” “No.” Elif shook her head furiously. “I didn’t say nothing.” “I’m not trying to suggest you provoked her. I’m just curious. What was it?”</p>
+<p>“I asked her something, so fucking what?” “What did you ask?” “I asked if he deserved it.” “Who?” “Him. Her bloke.” Elif smiled, although it wasn’t really a smile, more a misshapen grimace. “You mean her husband?” I hesitated, unsure if I understood. “You asked Alicia if her husband deserved to be killed?” Elif nodded and played a shot. “And I asked what he looked like. When she shot him and his skull was broke, and his brains all spilled out.” Elif laughed. I felt a sudden wave of disgust—similar to the feelings I imagined Elif had provoked in Alicia. Elif made you feel repulsion and hatred—that was her pathology, that was how her mother had made her feel as a small child. Hateful and repulsive. So Elif unconsciously provoked you to hate her—and mostly she succeeded. “And how are things now? Are you and Alicia on good terms?” “Oh, yeah, mate. We’re real tight. Best mates.” Elif laughed again. Before I could respond, I felt my phone vibrating in my pocket. I checked it. I didn’t recognize the number. “I should answer this. Thank you. You’ve been very helpful.” Elif muttered something unintelligible and went back to her game. * * * I walked into the corridor and answered the phone. “Hello?” “Is that Theo Faber?” “Speaking. Who’s this?” “Max Berenson here, returning your call.” “Oh, yes. Hi. Thanks for calling me back. I was wondering if we could have a conversation about Alicia?” “Why? What’s happened? Is something wrong?” “No. I mean, not exactly—I’m treating her, and I wanted to ask you a</p>
+<p>couple of questions about her. Whenever’s convenient.” “I don’t suppose we could do it on the phone? I’m rather busy.” “I’d rather talk in person, if possible.” Max Berenson sighed and mumbled as he spoke to someone off the phone. And then: “Tomorrow evening, seven o’clock, my office.” I was about to ask for the address—but he hung up.</p>
+</div>
+
+</article>
+
+        <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
+            <a href="ch21.html" style="padding: 10px 20px; background: #c8922a; color: #1a1208; text-decoration: none; border-radius: 4px; margin-right: 10px; font-weight: bold;">&laquo; Previous</a>
+            <a href="index.html" style="padding: 10px 20px; background: #f0e9d6; color: #1a1208; text-decoration: none; border-radius: 4px; border: 1px solid #c8922a; font-weight: bold;">Home</a>
+            <a href="ch23.html" style="padding: 10px 20px; background: #c8922a; color: #1a1208; text-decoration: none; border-radius: 4px; margin-left: 10px; font-weight: bold;">Next &raquo;</a>
+        </div>
+        
+
+  </div>
+</div>
+
+
+<script>
+// Font size
+let fontSize = 19;
+try { fontSize = parseInt(localStorage.getItem('tsp_fontSize') || '19'); } catch(e) {}
+function applyFont() {
+  document.querySelectorAll('.chbody').forEach(el => el.style.fontSize = fontSize + 'px');
+}
+function changeFont(d) {
+  fontSize = Math.min(28, Math.max(14, fontSize + d));
+  try { localStorage.setItem('tsp_fontSize', fontSize); } catch(e) {}
+  applyFont();
+}
+applyFont();
+
+// TOC active link on scroll
+const sections = document.querySelectorAll('section.chapter');
+const links = document.querySelectorAll('.toc-link');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+      if (active) {
+        active.classList.add('active');
+        active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// TOC click smooth scroll
+links.forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(link.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+</body>
+</html>
