@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Silent Patient — Alex Michaelides</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink: #1a1208;
+  --paper: #f7f2e8;
+  --paper2: #f0e9d6;
+  --gold: #c8922a;
+  --gold2: #e8b84b;
+  --red: #8b1a1a;
+  --muted: #7a6e5f;
+  --border: #d4c49a;
+  --sidebar-w: 260px;
+}
+
+/* CRITICAL: no sticky/fixed elements — these cause Read Aloud to jump */
+html, body {
+  height: auto;
+  overflow: auto;
+  scroll-behavior: auto;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 19px;
+  line-height: 1.85;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR — static, not fixed ── */
+#sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--ink);
+  border-right: 2px solid var(--gold);
+  /* NOT fixed — just a normal flex column */
+  position: static;
+  align-self: flex-start;
+  /* Sticky within scroll — safe for Read Aloud */
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+#sidebar::-webkit-scrollbar { width: 4px; }
+#sidebar::-webkit-scrollbar-track { background: transparent; }
+#sidebar::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+
+.sidebar-header {
+  padding: 28px 20px 20px;
+  border-bottom: 1px solid rgba(200,146,42,0.3);
+}
+.book-title {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--gold2);
+  text-transform: uppercase;
+  line-height: 1.4;
+  margin-bottom: 5px;
+}
+.book-author {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--muted);
+}
+.toc-nav { padding: 16px 0 40px; }
+.toc-nav ul { list-style: none; }
+li.toc-part {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+  text-transform: uppercase;
+  padding: 16px 20px 4px;
+  opacity: 0.6;
+}
+.toc-link {
+  display: block;
+  padding: 5px 20px;
+  font-size: 13px;
+  color: #b0a080;
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all 0.2s;
+}
+.toc-link:hover {
+  color: var(--gold2);
+  background: rgba(200,146,42,0.06);
+}
+.toc-link.active {
+  color: var(--gold2);
+  border-left-color: var(--gold);
+  padding-left: 26px;
+  background: rgba(200,146,42,0.08);
+}
+
+/* ── MAIN CONTENT ── */
+#main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Cover */
+#cover {
+  padding: 100px 60px 80px;
+  text-align: center;
+  background: var(--ink);
+  color: var(--paper);
+  border-bottom: 2px solid var(--gold);
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.cover-ornament {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 40px;
+}
+.cover-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(32px, 5vw, 60px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--paper);
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+.cover-the {
+  font-family: 'Crimson Pro', serif;
+  font-size: clamp(16px, 2.5vw, 26px);
+  font-style: italic;
+  font-weight: 300;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 4px;
+  letter-spacing: 0.12em;
+}
+.cover-divider {
+  width: 60px; height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  margin: 0 auto 20px;
+}
+.cover-author {
+  font-family: 'Crimson Pro', serif;
+  font-size: 18px;
+  font-style: italic;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+.cover-tagline {
+  font-size: 15px;
+  font-style: italic;
+  color: rgba(247,242,232,0.4);
+  max-width: 400px;
+}
+.cover-scroll { display: none; }
+
+/* Chapters */
+section.chapter {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 64px 40px 80px;
+  border-bottom: 1px solid var(--border);
+}
+.chheader {
+  text-align: center;
+  margin-bottom: 40px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.chheader::after {
+  content: '❧';
+  position: absolute;
+  bottom: -13px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--paper);
+  padding: 0 10px;
+  color: var(--gold);
+  font-size: 16px;
+}
+.partlabel {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.chtitle {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(16px, 2.5vw, 22px);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.08em;
+}
+.chbody p {
+  margin-bottom: 1.3em;
+  text-indent: 2em;
+}
+.chbody p:first-child {
+  text-indent: 0;
+}
+
+/* Font controls */
+.font-controls {
+  position: sticky;
+  top: 0;
+  background: var(--paper2);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  z-index: 10;
+}
+.font-btn {
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 3px 10px;
+  border-radius: 2px;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+.font-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+::-webkit-scrollbar { width: 7px; }
+::-webkit-scrollbar-track { background: var(--paper2); }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 4px; }
+
+@media (max-width: 768px) {
+  #sidebar { display: none; }
+  section.chapter { padding: 40px 20px 60px; }
+  .font-controls { padding: 8px 20px; }
+}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="book-title">The Silent Patient</div>
+    <div class="book-author">Alex Michaelides</div>
+  </div>
+  <div class="toc-nav">
+    <ul id="toc-list">
+<li><a href="ch1.html" class="toc-link">PROLOGUE</a></li>
+<li class="toc-part">PART ONE</li>
+<li><a href="ch2.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch3.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch4.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch5.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch6.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch7.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch8.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch9.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch10.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch11.html" class="toc-link">CHAPTER TEN</a></li>
+<li class="toc-part">PART TWO</li>
+<li><a href="ch12.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch13.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch14.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch15.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch16.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch17.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch18.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch19.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch20.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch21.html" class="toc-link">CHAPTER TEN</a></li>
+<li><a href="ch22.html" class="toc-link">CHAPTER ELEVEN</a></li>
+<li><a href="ch23.html" class="toc-link">CHAPTER TWELVE</a></li>
+<li><a href="ch24.html" class="toc-link">CHAPTER THIRTEEN</a></li>
+<li><a href="ch25.html" class="toc-link">CHAPTER FOURTEEN</a></li>
+<li><a href="ch26.html" class="toc-link">CHAPTER FIFTEEN</a></li>
+<li><a href="ch27.html" class="toc-link">CHAPTER SIXTEEN</a></li>
+<li><a href="ch28.html" class="toc-link">CHAPTER SEVENTEEN</a></li>
+<li><a href="ch29.html" class="toc-link">CHAPTER EIGHTEEN</a></li>
+<li><a href="ch30.html" class="toc-link">CHAPTER NINETEEN</a></li>
+<li><a href="ch31.html" class="toc-link">CHAPTER TWENTY</a></li>
+<li><a href="ch32.html" class="toc-link">CHAPTER TWENTY-ONE</a></li>
+<li><a href="ch33.html" class="toc-link">CHAPTER TWENTY-TWO</a></li>
+<li><a href="ch34.html" class="toc-link">CHAPTER TWENTY-THREE</a></li>
+<li><a href="ch35.html" class="toc-link">CHAPTER TWENTY-FOUR</a></li>
+<li><a href="ch36.html" class="toc-link">CHAPTER TWENTY-FIVE</a></li>
+<li><a href="ch37.html" class="toc-link">CHAPTER TWENTY-SIX</a></li>
+<li><a href="ch38.html" class="toc-link">CHAPTER TWENTY-SEVEN</a></li>
+<li><a href="ch39.html" class="toc-link">CHAPTER TWENTY-EIGHT</a></li>
+<li><a href="ch40.html" class="toc-link">CHAPTER TWENTY-NINE</a></li>
+<li><a href="ch41.html" class="toc-link">CHAPTER THIRTY</a></li>
+<li><a href="ch42.html" class="toc-link">CHAPTER THIRTY-ONE</a></li>
+<li><a href="ch43.html" class="toc-link">CHAPTER THIRTY-TWO</a></li>
+<li><a href="ch44.html" class="toc-link">CHAPTER THIRTY-THREE</a></li>
+<li><a href="ch45.html" class="toc-link">CHAPTER THIRTY-FOUR</a></li>
+<li class="toc-part">PART FOUR</li>
+<li><a href="ch46.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch47.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch48.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch49.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch50.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch51.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch52.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch53.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch54.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch55.html" class="toc-link">CHAPTER TEN</a></li>
+<li><a href="ch56.html" class="toc-link">CHAPTER ELEVEN</a></li>
+<li><a href="ch57.html" class="toc-link">CHAPTER TWELVE</a></li>
+<li><a href="ch58.html" class="toc-link">CHAPTER THIRTEEN</a></li>
+<li><a href="ch59.html" class="toc-link">CHAPTER FOURTEEN</a></li>
+<li><a href="ch60.html" class="toc-link">CHAPTER FIFTEEN</a></li>
+<li><a href="ch61.html" class="toc-link">CHAPTER SIXTEEN</a></li>
+<li><a href="ch62.html" class="toc-link">CHAPTER SEVENTEEN</a></li>
+<li><a href="ch63.html" class="toc-link">CHAPTER EIGHTEEN</a></li>
+<li><a href="ch64.html" class="toc-link">CHAPTER NINETEEN</a></li>
+<li><a href="ch65.html" class="toc-link">CHAPTER TWENTY</a></li>
+<li><a href="ch66.html" class="toc-link">CHAPTER TWENTY-ONE</a></li>
+<li class="toc-part">PART FIVE</li>
+<li><a href="ch67.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch68.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch69.html" class="toc-link">CHAPTER THREE</a></li>
+
+    </ul>
+  </div>
+</nav>
+
+<div id="main">
+  <div id="cover">
+    <div class="cover-ornament">A Novel</div>
+    <h1 class="cover-title">
+      <span class="cover-the">The</span>
+      Silent Patient
+    </h1>
+    <div class="cover-divider"></div>
+    <div class="cover-author">Alex Michaelides</div>
+    <p class="cover-tagline">"But why does she not speak?" — Euripides, Alcestis</p>
+  </div>
+
+  <div class="font-controls">
+    FONT SIZE:
+    <button class="font-btn" onclick="changeFont(-1)">A−</button>
+    <button class="font-btn" onclick="changeFont(1)">A+</button>
+  </div>
+
+  <div id="chapters-wrap">
+
+<article class="chapter" id="ch45">
+
+<div class="chheader">
+<div class="partlabel">PART TWO</div>
+<h2 class="chtitle">CHAPTER THIRTY-FOUR</h2>
+</div>
+<div class="chbody">
+<p>DIOMEDES WAS WRONG ABOUT IT SNOWING. It didn’t snow; instead it started raining heavily that afternoon. A storm with angry drumbeats of thunder and lightning flashes. I waited for Alicia in the therapy room, watching the rain batter the window. I felt weary and depressed. The whole thing had been a waste of time. I had lost Alicia before I could help her; now I never would. A knock at the door. Yuri escorted Alicia into the therapy room. She looked worse than I expected. She was pale, ashen, ghostlike. She moved clumsily, and her right leg trembled nonstop. Fucking Christian, I thought— she was drugged out of her mind. There was a long pause after Yuri left. Alicia didn’t look at me. Eventually I spoke. Loudly and clearly, to make sure she understood. “Alicia. I’m sorry you were put in seclusion. I’m sorry you had to go through that.” No reaction. I hesitated. “I’m afraid that because of what you did to Elif, our therapy has been terminated. This wasn’t my decision—far from it—but there’s nothing I can do about it. I’d like to offer you this opportunity to talk about what happened, to explain your attack on Elif. And express the remorse I’m sure you’re feeling.” Alicia said nothing. I wasn’t sure my words were penetrating her medicated haze. “I’ll tell you how I feel. I feel angry, to be honest. I feel angry that our work is ending before we’ve even properly begun—and I feel angry that you didn’t try harder.” Alicia’s head moved. Her eyes stared into mine. “You’re afraid, I know that. I’ve been trying to help you—but you won’t let me. And now I don’t know what to do.” I fell silent, defeated.</p>
+<p>Then Alicia did something I will never forget. She held out her trembling hand toward me. She was clutching something —a small leatherbound notebook. “What’s that?” No reply. She kept holding it out. I peered at it, curious. “Do you want me to take it?” No response. I hesitated and gently took the notebook from her fluttering fingers. I opened it and thumbed through the pages. It was a handwritten diary, a journal. Alicia’s journal. Judging by the handwriting, it was written in a chaotic state of mind, particularly the last pages, where the writing was barely legible—arrows connecting different paragraphs written in different angles across the page, doodles and drawings taking over some pages, flowers growing into vines, covering what had been written and making it almost indecipherable. I looked at Alicia, burning with curiosity. “What do you want me to do with this?” The question was quite unnecessary. It was obvious what Alicia wanted. She wanted me to read it.</p>
+<p>Alicia Berenson’s Diary AUGUST 8 Something odd happened today. I was in the kitchen, making coffee, looking out the window—looking without seeing—daydreaming—and then I noticed something, or rather someone— outside. A man. I noticed him because he was standing so still—like a statue —and facing the house. He was on the other side of the road, by the entrance to the park. He was standing in the shadow of a tree. He was tall, well built. I couldn’t make out his features, as he was wearing sunglasses and a cap. I couldn’t tell if he could see me or not, through the window, but it felt as if he was staring right at me. I thought it was weird—I’m used to people waiting across the street at the bus stop, but he wasn’t waiting for a bus. He was staring at the house. I realized that I had been standing there for several minutes, so I made myself leave the window. I went to the studio. I tried to paint but couldn’t concentrate. My mind kept going back to the man. I decided to give myself another twenty minutes, then I’d go back to the kitchen and look. If he was still there, then what? He wasn’t doing anything wrong. He might be a burglar, studying the house—I suppose that was my first thought—but why just stand there like that, so conspicuously? Maybe he was thinking of moving here? Maybe he’s buying the house for sale at the end of the street? That could explain it. But when I went back to the kitchen and peered out of the window, he had gone. The street was empty. I guess I’ll never know what he was doing. How strange. AUGUST 10 I went to the play with Jean-Felix last night. Gabriel didn’t want me to, but I went anyway. I was dreading it, but I thought if I gave Jean-Felix what he wanted and went with him, maybe that would be an end to this. I hoped so, anyway. We arranged to meet early, to have a drink—his idea—and when I got there, it was still light. The sun was low in the sky, coloring the river bloodred. Jean- Felix was waiting for me outside the National. I saw him before he saw me.</p>
+<p>He was scanning the crowds, scowling. If I had any doubt I was doing the right thing, seeing his angry face dispelled it. I was filled with a horrible kind of dread—and nearly turned and bolted. But he turned and saw me before I could. He waved, and I went over to him. I pretended to smile, and so did he. “I’m so glad you came,” Jean-Felix said. “I was worried you wouldn’t show up. Shall we go in and have a drink?” We had a drink in the foyer. It was awkward, to say the least. Neither of us mentioned the other day. We talked a lot about nothing, or rather Jean-Felix talked and I listened. We ended up having a couple of drinks. I hadn’t eaten and I felt a bit drunk; I think that was probably Jean-Felix’s intention. He was trying his best to engage me, but the conversation was stilted—it was orchestrated, stage-managed. Everything that came out of his mouth seemed to start with “Wasn’t it fun when” or “Do you remember that time we”—as if he’d rehearsed little reminiscences in the hope that they’d weaken my resolve and remind me how much history we had, how close we were. What he doesn’t seem to realize is I’ve made my decision. And nothing he can say now will change that. In the end, I’m glad I went. Not because I saw Jean-Felix—because I saw the play. Alcestis isn’t a tragedy I’ve heard of—I suppose it’s obscure because it’s a smaller kind of domestic story, which is why I liked it so much. It was staged in the present day, in a small suburban house in Athens. I liked the scale of it. An intimate kitchen-sink tragedy. A man is condemned to die, and his wife, Alcestis, wants to save him. The actress playing Alcestis looked like a Greek statue, she had a wonderful face—I kept thinking about painting her. I thought about getting her details and contacting her agent. I nearly mentioned it to Jean-Felix, but I stopped myself. I don’t want to involve him in my life anymore, on any level. I had tears in my eyes at the end—Alcestis dies and is reborn. She literally comes back from the dead. There’s something there that I need to think about. I’m not sure exactly what yet. Of course, Jean-Felix had all kinds of reactions to the play, but none of them resonated with me, so I tuned him out and stopped listening. I couldn’t get Alcestis’s death and resurrection out of my mind—I kept thinking about it as we walked back across the bridge to the station. Jean- Felix asked if I wanted to have another drink, but I said I was tired. There was another awkward pause. We stood outside the entrance to the station. I thanked him for the evening and said it had been fun.</p>
+<p>“Just have one more drink,” Jean-Felix said. “One more. For old times’ sake?” “No, I should go.” I tried to leave—and he grabbed my hand. “Alicia,” he said. “Listen to me. I need to tell you something.” “No, please don’t, there’s nothing to say, really—” “Just listen. It’s not what you think.” And he was right, it wasn’t. I was expecting Jean-Felix to plead for our friendship, or try to make me feel guilty for leaving the gallery. But what he said took me totally by surprise. “You need to be careful,” he said. “You’re way too trusting. The people around you … you trust them. Don’t. Don’t trust them.” I stared at him blankly. It took me a second to speak. “What are you talking about? Who do you mean?” Jean-Felix just shook his head and didn’t say anything. He let go of my hand and walked off. I called after him but he didn’t stop. “Jean-Felix. Stop.” He didn’t look back. I watched him disappear around the corner. I stood there, rooted to the spot. I didn’t know what to think. What was he doing making a mysterious warning and then walking off like that? I guess he wanted to get the upper hand and leave me feeling unsure and wrong-footed. And he succeeded. He also left me feeling angry. Now, in a way, he’s made it easy for me. Now I’m determined to cut him out of my life. What did he mean about “people around me”—presumably that means Gabriel? But why? No. I’m not doing this. This is exactly what Jean-Felix wanted—to fuck with my head. Get me obsessing about him. Come between me and Gabriel. I won’t fall for it. I won’t give it another thought. I went back home, and Gabriel was in bed, asleep. He had a five a.m. call for a shoot. But I woke him up, and we had sex. I couldn’t get close enough to him or feel him deeply enough in me. I wanted to be fused with him. I wanted to climb inside him and disappear.</p>
+<p>AUGUST 11 I saw that man again. He was a bit farther away this time—he was sitting on a bench farther into the park. But it was him, I could tell—most people are wearing shorts and T-shirts and light colors in this weather, and he was wearing a dark shirt and trousers, black sunglasses, and cap. His head was angled toward the house, looking at it. I had a funny thought—maybe he’s not a burglar, perhaps he’s a painter. Perhaps he’s a painter like me and he’s thinking about painting the street—or the house. But as soon as I thought this, I knew it wasn’t true. If he were really going to paint the house, he wouldn’t just be sitting there—he’d be making sketches. I got myself into a state about it and I phoned Gabriel. That was a mistake. I could tell he was busy—the last he needed was me calling, freaking out because I think someone is watching the house. Of course, I’m only assuming the man is watching the house. He could be watching me. AUGUST 13 He was there again. It was soon after Gabriel left this morning. I had a shower and saw him out the bathroom window. He was closer this time. He was standing outside the bus stop. Like he was casually waiting for the bus. I don’t know who he thinks he’s fooling. I got dressed quickly and went into the kitchen to have a better look. But he was gone. I decided to tell Gabriel about it when he got home. I thought he’d brush it off, but he took it seriously. He seemed quite worried. “Is it Jean-Felix?” he said straightaway. “No, of course not. How can you even think that?” I tried to sound surprised and indignant. But in truth I had wondered that too. The man and Jean-Felix are the same build. It could be Jean-Felix, but even so—I just don’t want to believe it. He wouldn’t try and frighten me like that. Would he?</p>
+<p>“What’s Jean-Felix’s number?” Gabriel said. “I’m calling him right now.” “Darling, don’t, please. I’m sure it’s not him.” “Positive?” “Absolutely. Nothing happened. I don’t know why I’m making such a big deal out of it. It’s nothing.” “How long was he there for?” “Not long—an hour or so—and then he vanished.” “What do you mean, vanished?” “He just disappeared.” “Uh-huh. Is there any chance you could be imagining this?” Something about the way he said that annoyed me. “I’m not imagining it. I need you to believe me.” “I do believe you.” But I could tell he didn’t totally believe me. He only partly believed me. Part of him was just humoring me. Which makes me angry, if I’m honest. So angry I have to stop here—or I might write something I’ll regret. AUGUST 14 I jumped out of bed as soon as I woke up. I checked the window, hoping the man would be there again—so Gabriel could see him too—but there was no sign of him. So I felt even more stupid. This afternoon I decided to go for a walk, despite the heat. I wanted to be in the park, away from the buildings and roads and other people—and be alone with my thoughts. I walked up to Parliament Hill, passing the bodies of sunbathers strewn around on either side of the path. I found a bench that was unoccupied, and I sat down. I stared out at London glinting in the distance. While I was there, I was conscious the whole time of something. I kept looking over my shoulder—but couldn’t see anyone. But someone was there, the whole time. I could feel it. I was being watched. On my way back, I walked past the pond. I happened to look up—and there he was, the man. He was standing across the water on the other side, too far away to see clearly, but it was him. I knew it was him. He was standing perfectly still, motionless, staring right at me.</p>
+<p>I felt an icy shiver of fear. I acted out of instinct: “Jean-Felix?” I shouted. “Is that you? Stop it. Stop following me!” He didn’t move. I acted as fast as I could. I reached into my pocket, pulled out my phone, and took a photo of him. What good it will do, I have no idea. Then I turned and started walking quickly to the end of the pond, not letting myself look back until I reached the main path. I was scared he was going to be right behind me. I turned around—and he was gone. I hope it’s not Jean-Felix. I really do. When I got home, I was feeling on edge. I drew the blinds and turned off the lights. I peered out the window—and there he was: The man was standing on the street, staring up at me. I froze—I didn’t know what to do. I nearly jumped out of my skin when someone called my name: “Alicia? Alicia, are you there?” It was that awful woman from next door. Barbie Hellmann. I left the window and went to the back door and opened it. Barbie had let herself in the side gate and was in the garden, clutching a bottle of wine. “Hi, honey. I saw you weren’t in your studio. I wondered where you were.” “I was out, I just got back.” “Time for a drink?” She said this in a baby voice she sometimes uses and that I find irritating. “Actually, I should get back to work.” “Just a quick one. And then I have to go. I’ve got my Italian class tonight. Okay?” Without waiting for a reply, she came in. She said something about how dark it was in the kitchen and started opening the blinds without asking me. I was about to stop her, but when I looked outside, no one was on the street. The man had gone. I don’t know why I told Barbie about it. I don’t like her or trust her—but I was scared, I suppose, and I needed someone to talk to, and she happened to be there. We had a drink, which was unlike me, and I burst into tears. Barbie</p>
+<p>stared at me wide-eyed, silent for once. After I finished, she put down her bottle of wine and said, “This calls for something stronger.” She poured us a couple of whiskeys. “Here.” She gave it to me. “You need this.” She was right—I needed it. I knocked it back and felt a kick from it. Now it was my turn to listen, while Barbie talked. She didn’t want to scare me, she said, but it didn’t sound good. “I’ve seen this on like a million TV shows. He’s studying your house, okay? Before he makes his move.” “You think he’s a burglar?” Barbie shrugged. “Or a rapist. Does that matter? It’s bad news, whatever it is.” I laughed. I felt relieved and grateful that someone was taking me seriously— even if it was just Barbie. I showed her the photo on my phone, but she wasn’t impressed. “Text it to me so I can look at it with my glasses on. It looks like a blurry smudge to me. Tell me. Have you mentioned this to your husband yet?” I decided to lie. “No. Not yet.” Barbie gave me a funny look. “Why not?” “I don’t know, I suppose I worry Gabriel might think I’m exaggerating—or imagining it.” “Are you imagining it?” “No.” Barbie looked pleased. “If Gabriel doesn’t take you seriously, we’ll go to the police together. You and me. I can be very persuasive, believe me.” “Thanks, but I’m sure that won’t be necessary.” “It’s already necessary. Take this seriously, honey. Promise me you’ll tell Gabriel when he gets home?” I nodded. But I had already decided not to say anything further to Gabriel. There was nothing to tell. I have no proof the man was following me or watching me. Barbie was right, the photo proves nothing. It was all in my imagination—that’s what Gabriel will say. Best not to say anything to him at all and risk upsetting him again. I don’t want to bother</p>
+<p>him. I’m going to forget all about it. 4:00 A.M. It’s been a bad night. Gabriel came home, exhausted, at about ten. He’d had a long day and wanted to go to bed early. I tried to sleep too, but I couldn’t. Then a couple of hours ago, I heard a noise. It was coming from the garden. I got up and went to the back window. I looked out—I couldn’t see anyone, but I felt someone’s eyes on me. Someone was watching me from the shadows. I managed to pull myself away from the window and ran to the bedroom. I shook Gabriel awake. “The man is outside,” I said, “he’s outside the house.” Gabriel didn’t know what I was talking about. When he understood, he started to get angry. “For Christ’s sake. Give it a rest. I’ve got to be at work in three hours. I don’t want to play this fucking game.” “It’s not a game. Come and look. Please.” So we went to the window— And of course, the man wasn’t there. There was no one there. I wanted Gabriel to go outside, to check, but he wouldn’t. He went back upstairs, annoyed. I tried reasoning with him, but he said he wasn’t talking to me and went to sleep in the spare room. I didn’t go back to bed. I’ve been sitting here since then, waiting, listening, alert to any sound, checking the windows. No sign of him so far. Only a couple more hours to go. It will be light soon. AUGUST 15 Gabriel came downstairs ready to go to the shoot. When he saw me by the window and realized I’d been up all night, he went quiet and started acting strange. “Alicia, sit down. We need to talk.” “Yes. We do need to talk. About the fact that you don’t believe me.” “I believe that you believe it.”</p>
+<p>“That’s not the same thing. I’m not a fucking idiot.” “I never said you were an idiot.” “Then what are you saying?” I thought we were about to get into a fight, so I was taken aback by what Gabriel said. He spoke in a whisper. I could barely hear him. He said: “I want you to talk to someone. Please.” “What do you mean? A policeman?” “No,” Gabriel said, looking angry again. “Not a policeman.” I understood what he meant, what he was saying. But I needed to hear him say it. I wanted him to spell it out. “Then who?” “A doctor.” “I’m not seeing a doctor, Gabriel—” “I need you to do this for me. You need to meet me halfway.” He said it again: “I need you to meet me halfway.” “I don’t understand what you mean. Halfway where? I’m right here.” “No, you’re not. You’re not here!” He looked so tired, so upset. I wanted to protect him. I wanted to comfort him. “It’s okay, darling,” I said. “It’s going to be okay, you’ll see.” Gabriel shook his head, like he didn’t believe me. “I’m going to make an appointment with Dr. West. As soon as he can see you. Today if possible.” He hesitated and looked at me. “Okay?” Gabriel held out his hand for mine—I wanted to slap it away or scratch it. I wanted to bite him or hit him, or throw over the table and scream, “You think I’m fucking crazy but I’m not crazy! I’m not, I’m not, I’m not!” But I didn’t do any of those things. Instead I nodded and took Gabriel’s hand, and held it. “Okay, darling,” I said. “Whatever you want.” AUGUST 16 I went to see Dr. West today. Unwillingly, but I went. I hate him, I’ve decided. I hate him and his narrow house, and sitting in that</p>
+<p>weird, small room upstairs, hearing his dog barking in the living room. It never stopped barking, the whole time I was there. I wanted to shout at it to shut up, and I kept thinking Dr. West would say something about it, but he acted like he couldn’t hear it. Maybe he couldn’t. He didn’t seem to hear anything I was saying either. I told him what happened. I told him about the man watching the house, and how I had seen him following me into the park. I said all of this, but he didn’t respond. He just sat there with that thin smile of his. He looked at me like I was an insect or something. I know he’s supposedly a friend of Gabriel’s, but I don’t see how they ever could have been friends. Gabriel is so warm, and Dr. West is the opposite of warm. It’s a strange thing to say about a doctor, but he has no kindness. After I finished telling him about the man, he didn’t speak for ages. The silence seemed to last forever. The only sound was that dog downstairs. I started to mentally tune in to the barking and go into a kind of trance. It took me by surprise when Dr. West actually spoke. “We’ve been here before, Alicia, haven’t we?” I looked at him blankly. I wasn’t sure what he meant. “Have we?” He nodded. “Yes. We have.” “I know you think I’m imagining this. I’m not imagining it. It’s real.” “That’s what you said last time. Remember last time? Do you remember what happened?” I didn’t reply. I didn’t want to give him the satisfaction. I just sat there, glaring at him, like a disobedient child. Dr. West didn’t wait for an answer. He kept talking, reminding me what happened after my father died, about the breakdown I suffered, the paranoid accusations that I made—the belief I was being watched, being followed, and spied upon. “So, you see, we’ve been here before, haven’t we?” “But that was different. It was just a feeling. I never actually saw someone. This time I saw someone.” “And who did you see?” “I already told you. A man.” “Describe him to me.” I hesitated. “I can’t.”</p>
+<p>“Why not?” “I couldn’t see him clearly. I told you—he was too far away.” “I see.” “And—he was in disguise. He was wearing a cap. And sunglasses.” “A lot of people are wearing sunglasses in this weather. And hats. Are they all in disguise?” I was starting to lose my temper. “I know what you’re trying to do.” “And what is that?” “You’re trying to get me to admit I’m going crazy again—like after Dad died.” “Is that what you think is happening?” “No. That time I was sick. This time I’m not sick. Nothing’s the matter with me—apart from the fact that someone is spying on me and you won’t believe me!” Dr. West nodded, but didn’t say anything. He wrote a couple of things down in his notebook. “I’m going to put you back on medication. As a precaution. We don’t want to let this get out hand, do we?” I shook my head. “I’m not taking any pills.” “I see. Well, if you refuse the medication, it’s important to be aware of the consequences.” “What consequences? Are you threatening me?” “It’s nothing to do with me. I’m talking about your husband. How do you think Gabriel feels about what he went through, last time you were unwell?” I pictured Gabriel downstairs, waiting in the living room with the barking dog. “I don’t know. Why don’t you ask him?” “Do you want him to have to go through it all again? Do you perhaps think there’s a limit to how much he can take?” “What are you saying? I’ll lose Gabriel? That’s what you think?” Even saying it made me feel sick. The thought of losing him, I couldn’t bear it. I’d do anything to keep him—even pretend I’m crazy when I know I’m not. So</p>
+<p>I gave in. I agreed to be “honest’ with Dr. West about what I was thinking and feeling and tell him if I heard any voices. I promised to take the pills he gave me, and to come back in two weeks, for a checkup. Dr. West looked pleased. He said we could go downstairs now and rejoin Gabriel. As he went downstairs in front of me, I thought about reaching forward and shoving him down the stairs. I wish I had. Gabriel seemed much happier on the way home. He kept glancing at me as he was driving and smiling. “Well done. I’m proud of you. We’re going to get through this, you’ll see.” I nodded but didn’t say anything. Because of course it’s bullshit—“we” aren’t going to get through this. I’m going to have to deal with it alone. It was a mistake telling anyone. Tomorrow I’m going to tell Barbie to forget all about it—I’ll say I’ve put it behind me and I don’t want to talk about it again. She’ll think I’m odd and she’ll be annoyed because I’ll be denying her the drama, but if I act normally, she’ll soon forget all about it. As for Gabriel, I’m going to put his mind at rest. I’m going to act like everything is back to normal. I’ll give a brilliant performance. I won’t let my guard slip for a second. We went to the pharmacy on the way back, and Gabriel got my prescription. Once we were home again, we went into the kitchen. He gave me the yellow pills with a glass of water. “Take them.” “I’m not a child. You don’t need to hand them to me.” “I know you’re not a child. I just want to make sure you’ll take them—and not throw them away.” “I’ll take them.” “Go on, then.” Gabriel watched me put the pills in my mouth and sip some water. “Good girl,” he said, and kissed my cheek. He left the room. The moment Gabriel’s back was turned, I spat out the pills. I spat them into the sink and washed them down the drain. I’m not taking any medication. The drugs Dr. West gave me last time nearly drove me crazy. And I’m not going to risk that again.</p>
+<p>I need my wits about me now. I need to be prepared. AUGUST 17 I’ve started hiding this diary. There’s a loose floorboard in the spare bedroom. I’m keeping it there, out of sight in the space underneath the floorboards. Why? Well, I’m being too honest here in these pages. It’s not safe to leave it lying around. I keep imagining Gabriel stumbling across the notebook and fighting his curiosity but then opening it and starting to read. If he found out I’m not taking the medication, he’d feel so betrayed, so hurt—I couldn’t bear that. Thank God I have this diary to write in. It’s keeping me sane. There’s no one else I can talk to. No one I can trust. AUGUST 21 I’ve not been outside for three days. I’ve been pretending to Gabriel that I’m going for walks in the afternoons when he’s out, but it’s not true. It makes me fearful, the thought of going outside. I’ll be too exposed. At least here, in the house, I know I’m safe. I can sit by the window and monitor the passersby. I’m scanning each face that passes for that man’s face—but I don’t know what he looks like, that’s the problem. He could have removed his disguise and be moving about in front of me, completely unnoticed. That’s an alarming thought. AUGUST 22 Still no sign of him. But I mustn’t lose focus. It’s just a matter of time. Sooner or later he’ll be back. I need to be ready. I need to take steps. I woke up this morning and remembered Gabriel’s gun. I’m going to move it from the spare room. I’ll keep it downstairs where I can get to it easily. I’ll put it in the kitchen cupboard, by the window. That way it will be there if I need it. I know all this sounds crazy. I hope nothing comes of it. I hope I never see the man again. But I have a horrible feeling I will. Where is he? Why hasn’t he been here? Is he trying to get me to lower my</p>
+<p>guard? I mustn’t do that. I must continue my vigil by the window. Keep waiting. Keep watching. AUGUST 23 I’m starting to think I imagined the whole thing. Maybe I did. Gabriel keeps asking me how I’m doing—if I’m okay. I can tell he’s worried, despite me insisting I’m fine. My acting doesn’t seem to be convincing him anymore. I need to try harder. I pretend to be focused on work all day, whereas in fact work couldn’t be further from my mind. I’ve lost any connection with it, any impetus to finish the paintings. As I write this, I can’t honestly say I think I’ll paint again. Not until all this is behind me, anyway. I’ve been making excuses about why I don’t want to go out, but Gabriel told me tonight I had no choice. Max has asked us out to dinner. I can’t think of anything worse than seeing Max. I pleaded with Gabriel to cancel, saying I needed to work, but he told me it would do me good to go. He insisted and I could tell he meant it, so I had no choice. I gave in and said yes. I’ve been worrying all day, about tonight. Because as soon as my mind started turning on it, everything seemed to fall into place. Everything made sense. I don’t know why I didn’t think of it before, it’s so obvious. I understand now. The man—the man who’s watching—it isn’t Jean-Felix. Jean-Felix isn’t dark or devious enough to do this kind of thing. Who else would want to torment me, scare me, punish me? Max. Of course it’s Max. It has to be Max. He’s trying to drive me crazy. I’m dreading it, but I must work up the courage somehow. I’m going to do it tonight. I’m going to confront him. AUGUST 24 It felt strange and a little frightening to go out last night, after so long inside the house. The outside world felt huge—an empty space around me, the big sky above. I felt very small and held on to Gabriel’s arm for support.</p>
+<p>Even though we went to our old favorite, Augusto’s, I didn’t feel safe. It didn’t feel comforting or familiar like it used to. The restaurant seemed different somehow. And it smelled different—it smelled of something burning. I asked Gabriel if something was on fire in the kitchen, but he said he couldn’t smell anything, that I was imagining it. “Everything’s fine,” he said. “Just calm down.” “I am calm. Don’t I seem calm?” Gabriel didn’t respond. He just clenched his jaw, the way he does when he’s annoyed. We sat down and waited for Max in silence. Max brought his receptionist to dinner. Tanya, she’s called. Apparently they’ve started dating. Max was acting like he was smitten with her, his hands all over her, touching her, kissing her—and all the time he kept staring at me. Did he think he was going to make me jealous? He’s horrible. He makes me sick. Tanya noticed something was up—she caught Max staring at me a couple of times. I should warn her about him really. Tell her what she’s getting into. Maybe I will, but not right now. I’ve got other priorities at the moment. Max said he was going to the bathroom. I waited a moment and I then seized my chance. I said I needed the bathroom too. I left the table and followed him. I caught up with Max around the corner and grabbed hold of his arm. I gripped it hard. “Stop it,” I said. “Stop it!” Max looked bemused. “Stop what?” “You’re spying on me, Max. You’re watching me. I know you are.” “What? I have no idea what you are talking about, Alicia.” “Don’t lie to me.” I was finding it hard to control my voice. I wanted to scream. “I’ve seen you, okay? I took a photo. I took a picture of you!” Max laughed. “What are you talking about? Let go of me, you crazy bitch.” I slapped his face. Hard. And then I turned and saw Tanya standing there. She looked like she was the one who’d been slapped. Tanya looked from Max to me but didn’t say anything. She walked out of the restaurant.</p>
+<p>Max glared at me, and before he followed her, he hissed, “I have no idea what you’re talking about. I’m not fucking watching you. Now, get out of my way.” The way he said it, with such anger, such contempt, I could tell Max was speaking the truth. I believed him. I didn’t want to believe him—but I did. But if it’s not Max … who is it? AUGUST 25 I just heard something. A noise outside. I checked the window. And I saw someone, moving in the shadows— It’s the man. He’s outside. I phoned Gabriel but he didn’t pick up. Should I call the police? I don’t know what to do. My hand is shaking so much I can barely— I can hear him—downstairs—he’s trying the windows, and the doors. He’s trying to get in. I need to get out of here. I need to escape. Oh my God—I can hear him— He’s inside. He’s inside the house.</p>
+</div>
+
+</article>
+
+        <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
+            <a href="ch44.html" style="padding: 10px 20px; background: #c8922a; color: #1a1208; text-decoration: none; border-radius: 4px; margin-right: 10px; font-weight: bold;">&laquo; Previous</a>
+            <a href="index.html" style="padding: 10px 20px; background: #f0e9d6; color: #1a1208; text-decoration: none; border-radius: 4px; border: 1px solid #c8922a; font-weight: bold;">Home</a>
+            <a href="ch46.html" style="padding: 10px 20px; background: #c8922a; color: #1a1208; text-decoration: none; border-radius: 4px; margin-left: 10px; font-weight: bold;">Next &raquo;</a>
+        </div>
+        
+
+  </div>
+</div>
+
+
+<script>
+// Font size
+let fontSize = 19;
+try { fontSize = parseInt(localStorage.getItem('tsp_fontSize') || '19'); } catch(e) {}
+function applyFont() {
+  document.querySelectorAll('.chbody').forEach(el => el.style.fontSize = fontSize + 'px');
+}
+function changeFont(d) {
+  fontSize = Math.min(28, Math.max(14, fontSize + d));
+  try { localStorage.setItem('tsp_fontSize', fontSize); } catch(e) {}
+  applyFont();
+}
+applyFont();
+
+// TOC active link on scroll
+const sections = document.querySelectorAll('section.chapter');
+const links = document.querySelectorAll('.toc-link');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+      if (active) {
+        active.classList.add('active');
+        active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// TOC click smooth scroll
+links.forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(link.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+</body>
+</html>

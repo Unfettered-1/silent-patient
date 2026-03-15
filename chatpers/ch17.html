@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Silent Patient — Alex Michaelides</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink: #1a1208;
+  --paper: #f7f2e8;
+  --paper2: #f0e9d6;
+  --gold: #c8922a;
+  --gold2: #e8b84b;
+  --red: #8b1a1a;
+  --muted: #7a6e5f;
+  --border: #d4c49a;
+  --sidebar-w: 260px;
+}
+
+/* CRITICAL: no sticky/fixed elements — these cause Read Aloud to jump */
+html, body {
+  height: auto;
+  overflow: auto;
+  scroll-behavior: auto;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 19px;
+  line-height: 1.85;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR — static, not fixed ── */
+#sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--ink);
+  border-right: 2px solid var(--gold);
+  /* NOT fixed — just a normal flex column */
+  position: static;
+  align-self: flex-start;
+  /* Sticky within scroll — safe for Read Aloud */
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+#sidebar::-webkit-scrollbar { width: 4px; }
+#sidebar::-webkit-scrollbar-track { background: transparent; }
+#sidebar::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+
+.sidebar-header {
+  padding: 28px 20px 20px;
+  border-bottom: 1px solid rgba(200,146,42,0.3);
+}
+.book-title {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--gold2);
+  text-transform: uppercase;
+  line-height: 1.4;
+  margin-bottom: 5px;
+}
+.book-author {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--muted);
+}
+.toc-nav { padding: 16px 0 40px; }
+.toc-nav ul { list-style: none; }
+li.toc-part {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+  text-transform: uppercase;
+  padding: 16px 20px 4px;
+  opacity: 0.6;
+}
+.toc-link {
+  display: block;
+  padding: 5px 20px;
+  font-size: 13px;
+  color: #b0a080;
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all 0.2s;
+}
+.toc-link:hover {
+  color: var(--gold2);
+  background: rgba(200,146,42,0.06);
+}
+.toc-link.active {
+  color: var(--gold2);
+  border-left-color: var(--gold);
+  padding-left: 26px;
+  background: rgba(200,146,42,0.08);
+}
+
+/* ── MAIN CONTENT ── */
+#main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Cover */
+#cover {
+  padding: 100px 60px 80px;
+  text-align: center;
+  background: var(--ink);
+  color: var(--paper);
+  border-bottom: 2px solid var(--gold);
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.cover-ornament {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 40px;
+}
+.cover-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(32px, 5vw, 60px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--paper);
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+.cover-the {
+  font-family: 'Crimson Pro', serif;
+  font-size: clamp(16px, 2.5vw, 26px);
+  font-style: italic;
+  font-weight: 300;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 4px;
+  letter-spacing: 0.12em;
+}
+.cover-divider {
+  width: 60px; height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  margin: 0 auto 20px;
+}
+.cover-author {
+  font-family: 'Crimson Pro', serif;
+  font-size: 18px;
+  font-style: italic;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+.cover-tagline {
+  font-size: 15px;
+  font-style: italic;
+  color: rgba(247,242,232,0.4);
+  max-width: 400px;
+}
+.cover-scroll { display: none; }
+
+/* Chapters */
+section.chapter {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 64px 40px 80px;
+  border-bottom: 1px solid var(--border);
+}
+.chheader {
+  text-align: center;
+  margin-bottom: 40px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.chheader::after {
+  content: '❧';
+  position: absolute;
+  bottom: -13px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--paper);
+  padding: 0 10px;
+  color: var(--gold);
+  font-size: 16px;
+}
+.partlabel {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.chtitle {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(16px, 2.5vw, 22px);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.08em;
+}
+.chbody p {
+  margin-bottom: 1.3em;
+  text-indent: 2em;
+}
+.chbody p:first-child {
+  text-indent: 0;
+}
+
+/* Font controls */
+.font-controls {
+  position: sticky;
+  top: 0;
+  background: var(--paper2);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  z-index: 10;
+}
+.font-btn {
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 3px 10px;
+  border-radius: 2px;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+.font-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+::-webkit-scrollbar { width: 7px; }
+::-webkit-scrollbar-track { background: var(--paper2); }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 4px; }
+
+@media (max-width: 768px) {
+  #sidebar { display: none; }
+  section.chapter { padding: 40px 20px 60px; }
+  .font-controls { padding: 8px 20px; }
+}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="book-title">The Silent Patient</div>
+    <div class="book-author">Alex Michaelides</div>
+  </div>
+  <div class="toc-nav">
+    <ul id="toc-list">
+<li><a href="ch1.html" class="toc-link">PROLOGUE</a></li>
+<li class="toc-part">PART ONE</li>
+<li><a href="ch2.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch3.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch4.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch5.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch6.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch7.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch8.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch9.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch10.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch11.html" class="toc-link">CHAPTER TEN</a></li>
+<li class="toc-part">PART TWO</li>
+<li><a href="ch12.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch13.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch14.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch15.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch16.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch17.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch18.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch19.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch20.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch21.html" class="toc-link">CHAPTER TEN</a></li>
+<li><a href="ch22.html" class="toc-link">CHAPTER ELEVEN</a></li>
+<li><a href="ch23.html" class="toc-link">CHAPTER TWELVE</a></li>
+<li><a href="ch24.html" class="toc-link">CHAPTER THIRTEEN</a></li>
+<li><a href="ch25.html" class="toc-link">CHAPTER FOURTEEN</a></li>
+<li><a href="ch26.html" class="toc-link">CHAPTER FIFTEEN</a></li>
+<li><a href="ch27.html" class="toc-link">CHAPTER SIXTEEN</a></li>
+<li><a href="ch28.html" class="toc-link">CHAPTER SEVENTEEN</a></li>
+<li><a href="ch29.html" class="toc-link">CHAPTER EIGHTEEN</a></li>
+<li><a href="ch30.html" class="toc-link">CHAPTER NINETEEN</a></li>
+<li><a href="ch31.html" class="toc-link">CHAPTER TWENTY</a></li>
+<li><a href="ch32.html" class="toc-link">CHAPTER TWENTY-ONE</a></li>
+<li><a href="ch33.html" class="toc-link">CHAPTER TWENTY-TWO</a></li>
+<li><a href="ch34.html" class="toc-link">CHAPTER TWENTY-THREE</a></li>
+<li><a href="ch35.html" class="toc-link">CHAPTER TWENTY-FOUR</a></li>
+<li><a href="ch36.html" class="toc-link">CHAPTER TWENTY-FIVE</a></li>
+<li><a href="ch37.html" class="toc-link">CHAPTER TWENTY-SIX</a></li>
+<li><a href="ch38.html" class="toc-link">CHAPTER TWENTY-SEVEN</a></li>
+<li><a href="ch39.html" class="toc-link">CHAPTER TWENTY-EIGHT</a></li>
+<li><a href="ch40.html" class="toc-link">CHAPTER TWENTY-NINE</a></li>
+<li><a href="ch41.html" class="toc-link">CHAPTER THIRTY</a></li>
+<li><a href="ch42.html" class="toc-link">CHAPTER THIRTY-ONE</a></li>
+<li><a href="ch43.html" class="toc-link">CHAPTER THIRTY-TWO</a></li>
+<li><a href="ch44.html" class="toc-link">CHAPTER THIRTY-THREE</a></li>
+<li><a href="ch45.html" class="toc-link">CHAPTER THIRTY-FOUR</a></li>
+<li class="toc-part">PART FOUR</li>
+<li><a href="ch46.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch47.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch48.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch49.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch50.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch51.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch52.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch53.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch54.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch55.html" class="toc-link">CHAPTER TEN</a></li>
+<li><a href="ch56.html" class="toc-link">CHAPTER ELEVEN</a></li>
+<li><a href="ch57.html" class="toc-link">CHAPTER TWELVE</a></li>
+<li><a href="ch58.html" class="toc-link">CHAPTER THIRTEEN</a></li>
+<li><a href="ch59.html" class="toc-link">CHAPTER FOURTEEN</a></li>
+<li><a href="ch60.html" class="toc-link">CHAPTER FIFTEEN</a></li>
+<li><a href="ch61.html" class="toc-link">CHAPTER SIXTEEN</a></li>
+<li><a href="ch62.html" class="toc-link">CHAPTER SEVENTEEN</a></li>
+<li><a href="ch63.html" class="toc-link">CHAPTER EIGHTEEN</a></li>
+<li><a href="ch64.html" class="toc-link">CHAPTER NINETEEN</a></li>
+<li><a href="ch65.html" class="toc-link">CHAPTER TWENTY</a></li>
+<li><a href="ch66.html" class="toc-link">CHAPTER TWENTY-ONE</a></li>
+<li class="toc-part">PART FIVE</li>
+<li><a href="ch67.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch68.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch69.html" class="toc-link">CHAPTER THREE</a></li>
+
+    </ul>
+  </div>
+</nav>
+
+<div id="main">
+  <div id="cover">
+    <div class="cover-ornament">A Novel</div>
+    <h1 class="cover-title">
+      <span class="cover-the">The</span>
+      Silent Patient
+    </h1>
+    <div class="cover-divider"></div>
+    <div class="cover-author">Alex Michaelides</div>
+    <p class="cover-tagline">"But why does she not speak?" — Euripides, Alcestis</p>
+  </div>
+
+  <div class="font-controls">
+    FONT SIZE:
+    <button class="font-btn" onclick="changeFont(-1)">A−</button>
+    <button class="font-btn" onclick="changeFont(1)">A+</button>
+  </div>
+
+  <div id="chapters-wrap">
+
+<article class="chapter" id="ch17">
+
+<div class="chheader">
+<div class="partlabel">PART TWO</div>
+<h2 class="chtitle">CHAPTER SIX</h2>
+</div>
+<div class="chbody">
+<p>I ARRIVED HOME, FEELING EXHAUSTED. Force of habit made me flick on the light in the hallway, even though the bulb had gone. We’d been meaning to replace it but kept forgetting. I knew at once that Kathy wasn’t there. It was too quiet; she was incapable of quiet. She wasn’t noisy but her world was full of sound—talking on the phone, reciting lines, watching movies, singing, humming, listening to bands I’d never heard of. But now the flat was silent as a tomb. I called her name. Force of habit, again—or a guilty conscience, perhaps, wanting to make sure I was alone before I transgressed? “Kathy?” No reply. I fumbled my way through the dark into the living room. I turned on the light. The room leaped out at me in the way new furniture always does until you’re used to it: new chairs, new cushions; new colors, reds and yellows, where there once had been black and white. A vase of pink lilies—Kathy’s favorite flowers—was on the table; their strong musky scent made the air thick and hard to breathe. What time was it? Eight-thirty. Where was she? Rehearsal? She was in a new production of Othello at the RSC, and it wasn’t going particularly well. Endless rehearsals had been taking their toll. She seemed visibly tired, pale, thinner than usual, fighting a cold. “I’m so fucking sick all the time,” she said. “I’m exhausted.” It was true; she’d come back from rehearsal later and later each night, looking terrible; she’d yawn and stumble straight into bed. So she probably wouldn’t be home for a couple of hours at the earliest. I decided to risk it. I took the jar of weed from its hiding place and started rolling a joint. I’d been smoking marijuana since university. I first encountered it during my first term, alone and friendless at a fresher party, too paralyzed with fear to initiate a conversation with any of the good-looking and confident young people around me. I was planning my escape when the girl standing next to me offered me something. I thought it was a cigarette until I smelled the</p>
+<p>spicy, pungent, curling black smoke. Too shy to refuse, I accepted it and brought the joint to my lips. It was badly rolled and coming unstuck, unraveling at the end. The tip was wet and stained red from her lipstick. It tasted different from a cigarette; it was richer, rawer, more exotic. I swallowed down the thick smoke and tried not to cough. Initially all I felt was a little light on my feet. Like sex, clearly more fuss was made over marijuana than it merited. Then—a minute or so later—something happened. Something incredible. It was like being drenched in an enormous wave of well-being. I felt safe, relaxed, totally at ease, silly and unself-conscious. That was it. Before long I was smoking weed every day. It became my best friend, my inspiration, my solace. An endless ritual of rolling, licking, lighting. I would get stoned just from the rustling of rolling papers and the anticipation of the warm, intoxicating high. All kinds of theories have been put forward about the origins of addiction. It could be genetic; it could be chemical; it could be psychological. But marijuana was doing something much more than soothing me: crucially, it altered the way I experienced my emotions; it cradled me and held me safe like a well-loved child. In other words, it contained me. The psychoanalyst W. R. Bion came up with the term containment to describe a mother’s ability to manage her baby’s pain. Remember, babyhood is not a time of bliss; it’s one of terror. As babies we are trapped in a strange, alien world, unable to see properly, constantly surprised at our bodies, alarmed by hunger and wind and bowel movements, overwhelmed by our feelings. We are quite literally under attack. We need our mother to soothe our distress and make sense of our experience. As she does so, we slowly learn how to manage our physical and emotional states on our own. But our ability to contain ourselves directly depends on our mother’s ability to contain us—if she had never experienced containment by her own mother, how could she teach us what she did not know? Someone who has never learned to contain himself is plagued by anxious feelings for the rest of his life, feelings that Bion aptly titled nameless dread. Such a person endlessly seeks this unquenchable containment from external sources—he needs a drink or a joint to “take the edge off” this endless anxiety. Hence my addiction to marijuana. I talked a lot about marijuana in therapy. I wrestled with the idea of giving it up and wondered why the prospect scared me so much. Ruth said that</p>
+<p>enforcement and constraint never produced anything good, and that, rather than force myself to live without weed, a better starting place might be to acknowledge that I was now dependent on it, and unwilling or unable to abandon it. Whatever marijuana did for me was still working, Ruth argued— until the day it would outlive its usefulness, when I would probably relinquish it with ease. Ruth was right. When I met Kathy and fell in love, marijuana faded into the background. I was naturally high on love, with no need to artificially induce a good mood. It helped that Kathy didn’t smoke it. Stoners, in her opinion, were weak willed and lazy and lived in slow motion—you pricked them and six days later they’d say, “Ouch.” I stopped smoking weed the day Kathy moved into my flat. And—as Ruth had predicted—once I was secure and happy, the habit fell away from me quite naturally, like dry caked mud from a boot. I might never have smoked it again if we hadn’t gone to a leaving party for Kathy’s friend Nicole, who was moving to New York. Kathy was monopolized by all her actor friends, and I found myself alone. A short, stubby man, wearing a pair of neon-pink glasses, nudged me and said, “Want some?” I was about to refuse the joint between his fingers, when something stopped me. I’m not sure what. A momentary whim? Or an unconscious attack on Kathy for forcing me to come to this horrible party and then abandoning me? I looked around, and she was nowhere to be seen. Fuck it, I thought. I brought the joint to my lips and inhaled. Just like that, I was back where I had started, as if there had been no break. My addiction had been patiently waiting for me all this time, like a faithful dog. I didn’t tell Kathy what I had done, and I put it out of my mind. In fact I was waiting for an opportunity, and six weeks later, it presented itself. Kathy went to New York for a week, to visit Nicole. Without Kathy’s influence, lonely and bored, I gave in to temptation. I didn’t have a dealer anymore, so I did what I had done as a student—and made my way to Camden Town market. As I left the station, I could smell marijuana in the air, mingled with the scent of incense and food stalls frying onions. I walked over to the bridge by Camden Lock. I stood there awkwardly, pushed and nudged by an endless stream of tourists and teenagers trudging back and forth across the bridge. I scanned the crowd. There was no sign of any of the dealers who used to</p>
+<p>line the bridge, calling out to you as you passed. I spotted a couple of police officers, unmissable in their bright yellow jackets, patrolling the crowd. They walked away from the bridge, toward the station. Then I heard a low voice by my side: “Want some green, mate?” I looked down and there was a small man. I thought he was a child at first, he was so slight and slender. But his face was a road map of rugged terrain, lined and crossed, like a boy prematurely aged. He was missing his two front teeth, giving his words a slight whistle. “Green?” he repeated. I nodded. He jerked his head at me to follow him. He slipped through the crowd and went around the corner and along a backstreet. He entered an old pub and I followed. It was deserted inside, dingy and tattered, and stank of vomit and old cigarette smoke. “Gissa beer,” he said, hovering at the bar. He was scarcely tall enough to see over it. I begrudgingly bought him half a pint. He took it to a table in the corner. I sat opposite him. He looked around furtively, then reached under the table and slipped me a small package wrapped in cellophane. I gave him some cash. I went home and I opened the package, half expecting to have been ripped off, but a familiar pungent smell drifted to my nose. I saw the little green buds streaked with gold. My heart raced as though I had encountered a long-lost friend; which I suppose I had. From then on, I would get high occasionally, whenever I found myself alone in the flat for a few hours, when I was sure Kathy would not be coming back anytime soon. That night, when I came home, tired and frustrated, and found Kathy out at rehearsal, I quickly rolled a joint. I smoked it out of the bathroom window. But I smoked too much, too fast—it hit me hard, like a punch between the eyes. I was so stoned, even walking felt difficult, like wading through treacle. I went through my usual sanitizing ritual—air freshener, brushing my teeth, taking a shower—and I carefully maneuvered myself to the living room. I sank onto the sofa. I looked for the TV remote but couldn’t see it. Then I located it, peeking out from behind Kathy’s open laptop on the coffee table. I reached for it, but</p>
+<p>was so stoned I knocked over the laptop. I propped the laptop up again—and the screen came to life. It was logged into her email account. For some reason, I kept staring at it. I was transfixed—her in-box stared at me like a gaping hole. I couldn’t look away. All kinds of things jumped out before I knew what I was reading: words such as “sexy” and “fuck” in the email headings—and repeated emails from BADBOY22. If only I’d stopped there. If only I’d got up and walked away—but I didn’t. I clicked on the most recent email and opened it: Subject: Re: little miss fuck From: Katerama_1 To: BADBOY22 I’m on the bus. So horny for you. I can smell you on me. I feel like a slut! Kxx Sent from my iPhone _______________________________________ Subject: Re: re: re: little miss fuck From: BADBOY22 To: Katerama_1 U r a slut! Lol. C u later? After rehearsal? _______________________________________ Subject: Re: re: re: re: re: little miss fuck From: BADBOY22 To: Katerama_1 Ok. Will see what time I can get away. I’ll text u. _______________________________________ Subject: Re: re: re: re: little miss fuck From: Katerama_1 To: BADBOY22 Ok. 830? 9? xx Sent from my iPhone</p>
+<p>_______________________________________ I pulled the laptop from the table. I sat with it on my lap, staring at it. I don’t know how long I sat like that. Ten minutes? Twenty minutes? Half an hour? Maybe longer. Time seemed to slow to a crawl. I tried to process what I had just seen, but I was still so stoned, I wasn’t sure what I had seen. Was it real? Or some kind of misunderstanding—some joke I wasn’t getting because I was so high? I forced myself to read another email. And another. I ended up going through all of Kathy’s emails to BADBOY22. Some were sexual, obscene even. Others were longer, more confessional, emotional, and she sounded drunk—perhaps they were written late at night, after I had gone to bed. I pictured myself in the bedroom, asleep, while Kathy was out here, writing intimate messages to this stranger. This stranger she was fucking. Time caught up with itself with a jolt. Suddenly I was no longer stoned. I was horribly, painfully sober. There was a wrenching pain in my stomach. I threw aside the laptop. I ran into the bathroom. I fell to my knees in front of the toilet and threw up.</p>
+</div>
+
+</article>
+
+        <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
+            <a href="ch16.html" style="padding: 10px 20px; background: #c8922a; color: #1a1208; text-decoration: none; border-radius: 4px; margin-right: 10px; font-weight: bold;">&laquo; Previous</a>
+            <a href="index.html" style="padding: 10px 20px; background: #f0e9d6; color: #1a1208; text-decoration: none; border-radius: 4px; border: 1px solid #c8922a; font-weight: bold;">Home</a>
+            <a href="ch18.html" style="padding: 10px 20px; background: #c8922a; color: #1a1208; text-decoration: none; border-radius: 4px; margin-left: 10px; font-weight: bold;">Next &raquo;</a>
+        </div>
+        
+
+  </div>
+</div>
+
+
+<script>
+// Font size
+let fontSize = 19;
+try { fontSize = parseInt(localStorage.getItem('tsp_fontSize') || '19'); } catch(e) {}
+function applyFont() {
+  document.querySelectorAll('.chbody').forEach(el => el.style.fontSize = fontSize + 'px');
+}
+function changeFont(d) {
+  fontSize = Math.min(28, Math.max(14, fontSize + d));
+  try { localStorage.setItem('tsp_fontSize', fontSize); } catch(e) {}
+  applyFont();
+}
+applyFont();
+
+// TOC active link on scroll
+const sections = document.querySelectorAll('section.chapter');
+const links = document.querySelectorAll('.toc-link');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+      if (active) {
+        active.classList.add('active');
+        active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// TOC click smooth scroll
+links.forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(link.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+</body>
+</html>
