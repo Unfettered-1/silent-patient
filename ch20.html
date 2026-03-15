@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Silent Patient — Alex Michaelides</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink: #1a1208;
+  --paper: #f7f2e8;
+  --paper2: #f0e9d6;
+  --gold: #c8922a;
+  --gold2: #e8b84b;
+  --red: #8b1a1a;
+  --muted: #7a6e5f;
+  --border: #d4c49a;
+  --sidebar-w: 260px;
+}
+
+/* CRITICAL: no sticky/fixed elements — these cause Read Aloud to jump */
+html, body {
+  height: auto;
+  overflow: auto;
+  scroll-behavior: auto;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 19px;
+  line-height: 1.85;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR — static, not fixed ── */
+#sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--ink);
+  border-right: 2px solid var(--gold);
+  /* NOT fixed — just a normal flex column */
+  position: static;
+  align-self: flex-start;
+  /* Sticky within scroll — safe for Read Aloud */
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+#sidebar::-webkit-scrollbar { width: 4px; }
+#sidebar::-webkit-scrollbar-track { background: transparent; }
+#sidebar::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+
+.sidebar-header {
+  padding: 28px 20px 20px;
+  border-bottom: 1px solid rgba(200,146,42,0.3);
+}
+.book-title {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--gold2);
+  text-transform: uppercase;
+  line-height: 1.4;
+  margin-bottom: 5px;
+}
+.book-author {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--muted);
+}
+.toc-nav { padding: 16px 0 40px; }
+.toc-nav ul { list-style: none; }
+li.toc-part {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+  text-transform: uppercase;
+  padding: 16px 20px 4px;
+  opacity: 0.6;
+}
+.toc-link {
+  display: block;
+  padding: 5px 20px;
+  font-size: 13px;
+  color: #b0a080;
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all 0.2s;
+}
+.toc-link:hover {
+  color: var(--gold2);
+  background: rgba(200,146,42,0.06);
+}
+.toc-link.active {
+  color: var(--gold2);
+  border-left-color: var(--gold);
+  padding-left: 26px;
+  background: rgba(200,146,42,0.08);
+}
+
+/* ── MAIN CONTENT ── */
+#main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Cover */
+#cover {
+  padding: 100px 60px 80px;
+  text-align: center;
+  background: var(--ink);
+  color: var(--paper);
+  border-bottom: 2px solid var(--gold);
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.cover-ornament {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 40px;
+}
+.cover-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(32px, 5vw, 60px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--paper);
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+.cover-the {
+  font-family: 'Crimson Pro', serif;
+  font-size: clamp(16px, 2.5vw, 26px);
+  font-style: italic;
+  font-weight: 300;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 4px;
+  letter-spacing: 0.12em;
+}
+.cover-divider {
+  width: 60px; height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  margin: 0 auto 20px;
+}
+.cover-author {
+  font-family: 'Crimson Pro', serif;
+  font-size: 18px;
+  font-style: italic;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+.cover-tagline {
+  font-size: 15px;
+  font-style: italic;
+  color: rgba(247,242,232,0.4);
+  max-width: 400px;
+}
+.cover-scroll { display: none; }
+
+/* Chapters */
+section.chapter {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 64px 40px 80px;
+  border-bottom: 1px solid var(--border);
+}
+.chheader {
+  text-align: center;
+  margin-bottom: 40px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.chheader::after {
+  content: '❧';
+  position: absolute;
+  bottom: -13px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--paper);
+  padding: 0 10px;
+  color: var(--gold);
+  font-size: 16px;
+}
+.partlabel {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.chtitle {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(16px, 2.5vw, 22px);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.08em;
+}
+.chbody p {
+  margin-bottom: 1.3em;
+  text-indent: 2em;
+}
+.chbody p:first-child {
+  text-indent: 0;
+}
+
+/* Font controls */
+.font-controls {
+  position: sticky;
+  top: 0;
+  background: var(--paper2);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  z-index: 10;
+}
+.font-btn {
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 3px 10px;
+  border-radius: 2px;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+.font-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+::-webkit-scrollbar { width: 7px; }
+::-webkit-scrollbar-track { background: var(--paper2); }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 4px; }
+
+@media (max-width: 768px) {
+  #sidebar { display: none; }
+  section.chapter { padding: 40px 20px 60px; }
+  .font-controls { padding: 8px 20px; }
+}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="book-title">The Silent Patient</div>
+    <div class="book-author">Alex Michaelides</div>
+  </div>
+  <div class="toc-nav">
+    <ul id="toc-list">
+<li><a href="ch1.html" class="toc-link">PROLOGUE</a></li>
+<li class="toc-part">PART ONE</li>
+<li><a href="ch2.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch3.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch4.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch5.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch6.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch7.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch8.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch9.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch10.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch11.html" class="toc-link">CHAPTER TEN</a></li>
+<li class="toc-part">PART TWO</li>
+<li><a href="ch12.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch13.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch14.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch15.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch16.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch17.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch18.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch19.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch20.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch21.html" class="toc-link">CHAPTER TEN</a></li>
+<li><a href="ch22.html" class="toc-link">CHAPTER ELEVEN</a></li>
+<li><a href="ch23.html" class="toc-link">CHAPTER TWELVE</a></li>
+<li><a href="ch24.html" class="toc-link">CHAPTER THIRTEEN</a></li>
+<li><a href="ch25.html" class="toc-link">CHAPTER FOURTEEN</a></li>
+<li><a href="ch26.html" class="toc-link">CHAPTER FIFTEEN</a></li>
+<li><a href="ch27.html" class="toc-link">CHAPTER SIXTEEN</a></li>
+<li><a href="ch28.html" class="toc-link">CHAPTER SEVENTEEN</a></li>
+<li><a href="ch29.html" class="toc-link">CHAPTER EIGHTEEN</a></li>
+<li><a href="ch30.html" class="toc-link">CHAPTER NINETEEN</a></li>
+<li><a href="ch31.html" class="toc-link">CHAPTER TWENTY</a></li>
+<li><a href="ch32.html" class="toc-link">CHAPTER TWENTY-ONE</a></li>
+<li><a href="ch33.html" class="toc-link">CHAPTER TWENTY-TWO</a></li>
+<li><a href="ch34.html" class="toc-link">CHAPTER TWENTY-THREE</a></li>
+<li><a href="ch35.html" class="toc-link">CHAPTER TWENTY-FOUR</a></li>
+<li><a href="ch36.html" class="toc-link">CHAPTER TWENTY-FIVE</a></li>
+<li><a href="ch37.html" class="toc-link">CHAPTER TWENTY-SIX</a></li>
+<li><a href="ch38.html" class="toc-link">CHAPTER TWENTY-SEVEN</a></li>
+<li><a href="ch39.html" class="toc-link">CHAPTER TWENTY-EIGHT</a></li>
+<li><a href="ch40.html" class="toc-link">CHAPTER TWENTY-NINE</a></li>
+<li><a href="ch41.html" class="toc-link">CHAPTER THIRTY</a></li>
+<li><a href="ch42.html" class="toc-link">CHAPTER THIRTY-ONE</a></li>
+<li><a href="ch43.html" class="toc-link">CHAPTER THIRTY-TWO</a></li>
+<li><a href="ch44.html" class="toc-link">CHAPTER THIRTY-THREE</a></li>
+<li><a href="ch45.html" class="toc-link">CHAPTER THIRTY-FOUR</a></li>
+<li class="toc-part">PART FOUR</li>
+<li><a href="ch46.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch47.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch48.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch49.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch50.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch51.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch52.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch53.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch54.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch55.html" class="toc-link">CHAPTER TEN</a></li>
+<li><a href="ch56.html" class="toc-link">CHAPTER ELEVEN</a></li>
+<li><a href="ch57.html" class="toc-link">CHAPTER TWELVE</a></li>
+<li><a href="ch58.html" class="toc-link">CHAPTER THIRTEEN</a></li>
+<li><a href="ch59.html" class="toc-link">CHAPTER FOURTEEN</a></li>
+<li><a href="ch60.html" class="toc-link">CHAPTER FIFTEEN</a></li>
+<li><a href="ch61.html" class="toc-link">CHAPTER SIXTEEN</a></li>
+<li><a href="ch62.html" class="toc-link">CHAPTER SEVENTEEN</a></li>
+<li><a href="ch63.html" class="toc-link">CHAPTER EIGHTEEN</a></li>
+<li><a href="ch64.html" class="toc-link">CHAPTER NINETEEN</a></li>
+<li><a href="ch65.html" class="toc-link">CHAPTER TWENTY</a></li>
+<li><a href="ch66.html" class="toc-link">CHAPTER TWENTY-ONE</a></li>
+<li class="toc-part">PART FIVE</li>
+<li><a href="ch67.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch68.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch69.html" class="toc-link">CHAPTER THREE</a></li>
+
+    </ul>
+  </div>
+</nav>
+
+<div id="main">
+  <div id="cover">
+    <div class="cover-ornament">A Novel</div>
+    <h1 class="cover-title">
+      <span class="cover-the">The</span>
+      Silent Patient
+    </h1>
+    <div class="cover-divider"></div>
+    <div class="cover-author">Alex Michaelides</div>
+    <p class="cover-tagline">"But why does she not speak?" — Euripides, Alcestis</p>
+  </div>
+
+  <div class="font-controls">
+    FONT SIZE:
+    <button class="font-btn" onclick="changeFont(-1)">A−</button>
+    <button class="font-btn" onclick="changeFont(1)">A+</button>
+  </div>
+
+  <div id="chapters-wrap">
+
+<article class="chapter" id="ch20">
+
+<div class="chheader">
+<div class="partlabel">PART TWO</div>
+<h2 class="chtitle">CHAPTER NINE</h2>
+</div>
+<div class="chbody">
+<p>RUTH SHOWED ME INTO THE LIVING ROOM. “Would you like a cup of tea?” The room was as it had always been, as I’d always remembered it—the rug, the heavy drapes, the silver clock ticking on the mantel, the armchair, the faded blue couch. I felt instantly reassured. “To be honest, I could do with something stronger.” Ruth shot me a brief, piercing glance, but didn’t comment. Nor did she refuse, as I half expected. She poured me a glass of sherry and handed it to me. I sat on the couch. Force of habit made me sit where I had always done for therapy, on the far left side, resting my arm on the armrest. The fabric underneath my fingertips had been worn thin by the anxious rubbing of many patients, myself included. I took a sip of sherry. It was warm, sweet, and little sickly, but I drank it down, conscious of Ruth watching me the whole time. Her gaze was obvious but not heavy or uncomfortable; in twenty years Ruth had never managed to make me feel uncomfortable. I didn’t speak again until I had finished the sherry and the glass was empty. “It feels odd to be sitting here with a glass in my hand. I know you’re not in the habit of offering drinks to your patients.” “You’re not my patient anymore. Just a friend—and by the look of you,” she added gently, “you need a friend right now.” “Do I look that bad?” “You do, I’m afraid. And it must be serious, or you wouldn’t come over uninvited like this. Certainly not at ten o’clock at night.” “You’re right. I felt—I felt I had no choice.” “What is it, Theo? What’s the matter?” “I don’t how to tell you. I don’t know where to start.” “How about the beginning?” I nodded. I took a breath and began. I told her about everything that had happened; I told her about starting marijuana again, and how I had been smoking it secretly—and how it had led to my discovering Kathy’s emails</p>
+<p>and her affair. I spoke quickly, breathlessly, wanting to get it off my chest. I felt as if I were at confession. Ruth listened without interruption until I had finished. It was hard to read her expression. Finally she said, “I am very sorry this happened, Theo. I know how much Kathy means to you. How much you love her.” “Yes. I love—” I stopped, unable to say her name. There was a tremor in my voice. Ruth picked up on it and edged the box of tissues toward me. I used to get angry when she would do that in our sessions; I’d accuse her of trying to make me cry. She would generally succeed. But not tonight. Tonight my tears were frozen. A reservoir of ice. I had been seeing Ruth for a long time before I met Kathy, and I continued therapy for the first three years of our relationship. I remember the advice Ruth gave me when Kathy and I first got together: “Choosing a lover is a lot like choosing a therapist. We need to ask ourselves, is this someone who will be honest with me, listen to criticism, admit making mistakes, and not promise the impossible?” I told all this to Kathy at the time, and she suggested we make a pact. We swore never to lie to each other. Never pretend. Always be truthful. “What happened?” I said. “What went wrong?” Ruth hesitated before she spoke. What she said surprised me. “I suspect you know the answer to that. If you would just admit it to yourself.” “I don’t know.” I shook my head. “I don’t.” I fell into indignant silence—yet I had a sudden image of Kathy writing all those emails, and how passionate they were, how charged, as if she was getting high from writing them, from the clandestine nature of her relationship with this man. She enjoyed lying and sneaking around: it was like acting, but offstage. “I think she’s bored,” I said eventually. “What makes you say that?” “Because she needs excitement. Drama. She always has. She’s been complaining—for a while, I suppose—that we don’t have any fun anymore, that I’m always stressed, that I work too hard. We fought about it recently. She kept using the word fireworks.”</p>
+<p>“Fireworks?” “As in there aren’t any. Between us.” “Ah. I see.” Ruth nodded. “We’ve talked about this before. Haven’t we?” “About fireworks?” “About love. About how we often mistake love for fireworks—for drama and dysfunction. But real love is very quiet, very still. It’s boring, if seen from the perspective of high drama. Love is deep and calm—and constant. I imagine you do give Kathy love—in the true sense of the word. Whether or not she is capable of giving it back to you is another question.” I stared at the box of tissues on the table in front of me. I didn’t like where Ruth was going. I tried to deflect her. “There are faults on both sides. I lied to her too. About the weed.” Ruth smiled sadly. “I don’t know if persistent sexual and emotional betrayal with another human being is on the same level as getting stoned every now and then. I think it points to a very different kind of individual— someone who is able to lie repeatedly and lie well, who can betray their partner without feeling any remorse—” “You don’t know that.” I sounded as pathetic as I felt. “She might feel terrible.” But even as I said that, I didn’t believe it. Neither did Ruth. “I don’t think so. I think her behavior suggests she is quite damaged—lacking in empathy and integrity and just plain kindness—all the qualities you brim with.” I shook my head. “That’s not true.” “It is true, Theo.” Ruth hesitated. “Don’t you think perhaps you’ve been here before?” “With Kathy?” Ruth shook her head. “I don’t mean that. I mean with your parents. When you were younger. If there’s a childhood dynamic here you might be replaying.” “No.” I suddenly felt irritated. “What’s happening with Kathy has got nothing to do with my childhood.”</p>
+<p>“Oh, really?” Ruth sounded disbelieving. “Trying to please someone unpredictable, someone emotionally unavailable, uncaring, unkind—trying to keep them happy, win their love—is this not an old story, Theo? A familiar story?” I clenched my fist and didn’t speak. Ruth went on hesitantly, “I know how sad you feel. But I want you to consider the possibility that you felt this sadness long before you met Kathy. It’s a sadness you’ve been carrying around for many years. You know, Theo, one of the hardest things to admit is that we weren’t loved when we needed it most. It’s a terrible feeling, the pain of not being loved.” She was right. I had been groping for the right words to express that murky feeling of betrayal inside, the horrible hollow ache, and to hear Ruth say it—“the pain of not being loved”—I saw how it pervaded my entire consciousness and was at once the story of my past, present, and future. This wasn’t just about Kathy: it was about my father, and my childhood feelings of abandonment; my grief for everything I never had and, in my heart, still believed I never would have. Ruth was saying that was why I chose Kathy. What better way for me to prove that my father was correct—that I’m worthless and unlovable—than by pursuing someone who will never love me? I buried my head in my hands. “So all this was inevitable? That’s what you’re saying—I set myself up for this? It’s fucking hopeless?” “It’s not hopeless. You’re not a boy at the mercy of your father anymore. You’re a grown man now—and you have a choice. Use this as another confirmation of how unworthy you are—or break with the past. Free yourself from endlessly repeating it.” “How do I do that? You think I should leave her?” “I think it’s a very difficult situation.” “But you think I should leave, don’t you?” “You’ve come too far and worked too hard to return to a life of dishonesty and denial and emotional abuse. You deserve someone who treats you better, much better—” “Just say it, Ruth. Say it. You think I should leave.” Ruth looked me in the eyes. She held my gaze. “I think you must leave.</p>
+<p>And I’m not saying this as your old therapist—but as your old friend. I don’t think you could go back, even if you wanted to. It might last a little while perhaps, but in a few months something else will happen and you’ll end up back here on this couch. Be honest with yourself, Theo—about Kathy and this situation—and everything built on lies and untruths will fall away from you. Remember, love that doesn’t include honesty doesn’t deserve to be called love.” I sighed, deflated, depressed, and tired. “Thank you, Ruth—for your honesty. It means a lot.” Ruth gave me a hug at the door as I left. She’d never done that before. She was fragile in my arms, her bones so delicate; I breathed in her faint flowery scent and the wool of her cardigan and again I felt like crying. But I didn’t, or couldn’t, cry. Instead I walked away and didn’t look back. I caught a bus back home. I sat by the window, staring out, thinking of Kathy, of her white skin, and those beautiful green eyes. I was filled with such a longing—for the sweet taste of her lips, her softness. But Ruth was right. Love that doesn’t include honesty doesn’t deserve to be called love. I had to go home and confront Kathy. I had to leave her.</p>
+</div>
+
+</article>
+
+        <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
+            <a href="ch19.html" style="padding: 10px 20px; background: #c8922a; color: #1a1208; text-decoration: none; border-radius: 4px; margin-right: 10px; font-weight: bold;">&laquo; Previous</a>
+            <a href="index.html" style="padding: 10px 20px; background: #f0e9d6; color: #1a1208; text-decoration: none; border-radius: 4px; border: 1px solid #c8922a; font-weight: bold;">Home</a>
+            <a href="ch21.html" style="padding: 10px 20px; background: #c8922a; color: #1a1208; text-decoration: none; border-radius: 4px; margin-left: 10px; font-weight: bold;">Next &raquo;</a>
+        </div>
+        
+
+  </div>
+</div>
+
+
+<script>
+// Font size
+let fontSize = 19;
+try { fontSize = parseInt(localStorage.getItem('tsp_fontSize') || '19'); } catch(e) {}
+function applyFont() {
+  document.querySelectorAll('.chbody').forEach(el => el.style.fontSize = fontSize + 'px');
+}
+function changeFont(d) {
+  fontSize = Math.min(28, Math.max(14, fontSize + d));
+  try { localStorage.setItem('tsp_fontSize', fontSize); } catch(e) {}
+  applyFont();
+}
+applyFont();
+
+// TOC active link on scroll
+const sections = document.querySelectorAll('section.chapter');
+const links = document.querySelectorAll('.toc-link');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+      if (active) {
+        active.classList.add('active');
+        active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// TOC click smooth scroll
+links.forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(link.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Silent Patient — Alex Michaelides</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink: #1a1208;
+  --paper: #f7f2e8;
+  --paper2: #f0e9d6;
+  --gold: #c8922a;
+  --gold2: #e8b84b;
+  --red: #8b1a1a;
+  --muted: #7a6e5f;
+  --border: #d4c49a;
+  --sidebar-w: 260px;
+}
+
+/* CRITICAL: no sticky/fixed elements — these cause Read Aloud to jump */
+html, body {
+  height: auto;
+  overflow: auto;
+  scroll-behavior: auto;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 19px;
+  line-height: 1.85;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR — static, not fixed ── */
+#sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--ink);
+  border-right: 2px solid var(--gold);
+  /* NOT fixed — just a normal flex column */
+  position: static;
+  align-self: flex-start;
+  /* Sticky within scroll — safe for Read Aloud */
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+#sidebar::-webkit-scrollbar { width: 4px; }
+#sidebar::-webkit-scrollbar-track { background: transparent; }
+#sidebar::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+
+.sidebar-header {
+  padding: 28px 20px 20px;
+  border-bottom: 1px solid rgba(200,146,42,0.3);
+}
+.book-title {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--gold2);
+  text-transform: uppercase;
+  line-height: 1.4;
+  margin-bottom: 5px;
+}
+.book-author {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--muted);
+}
+.toc-nav { padding: 16px 0 40px; }
+.toc-nav ul { list-style: none; }
+li.toc-part {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+  text-transform: uppercase;
+  padding: 16px 20px 4px;
+  opacity: 0.6;
+}
+.toc-link {
+  display: block;
+  padding: 5px 20px;
+  font-size: 13px;
+  color: #b0a080;
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all 0.2s;
+}
+.toc-link:hover {
+  color: var(--gold2);
+  background: rgba(200,146,42,0.06);
+}
+.toc-link.active {
+  color: var(--gold2);
+  border-left-color: var(--gold);
+  padding-left: 26px;
+  background: rgba(200,146,42,0.08);
+}
+
+/* ── MAIN CONTENT ── */
+#main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Cover */
+#cover {
+  padding: 100px 60px 80px;
+  text-align: center;
+  background: var(--ink);
+  color: var(--paper);
+  border-bottom: 2px solid var(--gold);
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.cover-ornament {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 40px;
+}
+.cover-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(32px, 5vw, 60px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--paper);
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+.cover-the {
+  font-family: 'Crimson Pro', serif;
+  font-size: clamp(16px, 2.5vw, 26px);
+  font-style: italic;
+  font-weight: 300;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 4px;
+  letter-spacing: 0.12em;
+}
+.cover-divider {
+  width: 60px; height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  margin: 0 auto 20px;
+}
+.cover-author {
+  font-family: 'Crimson Pro', serif;
+  font-size: 18px;
+  font-style: italic;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+.cover-tagline {
+  font-size: 15px;
+  font-style: italic;
+  color: rgba(247,242,232,0.4);
+  max-width: 400px;
+}
+.cover-scroll { display: none; }
+
+/* Chapters */
+section.chapter {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 64px 40px 80px;
+  border-bottom: 1px solid var(--border);
+}
+.chheader {
+  text-align: center;
+  margin-bottom: 40px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.chheader::after {
+  content: '❧';
+  position: absolute;
+  bottom: -13px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--paper);
+  padding: 0 10px;
+  color: var(--gold);
+  font-size: 16px;
+}
+.partlabel {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.chtitle {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(16px, 2.5vw, 22px);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.08em;
+}
+.chbody p {
+  margin-bottom: 1.3em;
+  text-indent: 2em;
+}
+.chbody p:first-child {
+  text-indent: 0;
+}
+
+/* Font controls */
+.font-controls {
+  position: sticky;
+  top: 0;
+  background: var(--paper2);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  z-index: 10;
+}
+.font-btn {
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 3px 10px;
+  border-radius: 2px;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+.font-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+::-webkit-scrollbar { width: 7px; }
+::-webkit-scrollbar-track { background: var(--paper2); }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 4px; }
+
+@media (max-width: 768px) {
+  #sidebar { display: none; }
+  section.chapter { padding: 40px 20px 60px; }
+  .font-controls { padding: 8px 20px; }
+}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="book-title">The Silent Patient</div>
+    <div class="book-author">Alex Michaelides</div>
+  </div>
+  <div class="toc-nav">
+    <ul id="toc-list">
+<li><a href="ch1.html" class="toc-link">PROLOGUE</a></li>
+<li class="toc-part">PART ONE</li>
+<li><a href="ch2.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch3.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch4.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch5.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch6.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch7.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch8.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch9.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch10.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch11.html" class="toc-link">CHAPTER TEN</a></li>
+<li class="toc-part">PART TWO</li>
+<li><a href="ch12.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch13.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch14.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch15.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch16.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch17.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch18.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch19.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch20.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch21.html" class="toc-link">CHAPTER TEN</a></li>
+<li><a href="ch22.html" class="toc-link">CHAPTER ELEVEN</a></li>
+<li><a href="ch23.html" class="toc-link">CHAPTER TWELVE</a></li>
+<li><a href="ch24.html" class="toc-link">CHAPTER THIRTEEN</a></li>
+<li><a href="ch25.html" class="toc-link">CHAPTER FOURTEEN</a></li>
+<li><a href="ch26.html" class="toc-link">CHAPTER FIFTEEN</a></li>
+<li><a href="ch27.html" class="toc-link">CHAPTER SIXTEEN</a></li>
+<li><a href="ch28.html" class="toc-link">CHAPTER SEVENTEEN</a></li>
+<li><a href="ch29.html" class="toc-link">CHAPTER EIGHTEEN</a></li>
+<li><a href="ch30.html" class="toc-link">CHAPTER NINETEEN</a></li>
+<li><a href="ch31.html" class="toc-link">CHAPTER TWENTY</a></li>
+<li><a href="ch32.html" class="toc-link">CHAPTER TWENTY-ONE</a></li>
+<li><a href="ch33.html" class="toc-link">CHAPTER TWENTY-TWO</a></li>
+<li><a href="ch34.html" class="toc-link">CHAPTER TWENTY-THREE</a></li>
+<li><a href="ch35.html" class="toc-link">CHAPTER TWENTY-FOUR</a></li>
+<li><a href="ch36.html" class="toc-link">CHAPTER TWENTY-FIVE</a></li>
+<li><a href="ch37.html" class="toc-link">CHAPTER TWENTY-SIX</a></li>
+<li><a href="ch38.html" class="toc-link">CHAPTER TWENTY-SEVEN</a></li>
+<li><a href="ch39.html" class="toc-link">CHAPTER TWENTY-EIGHT</a></li>
+<li><a href="ch40.html" class="toc-link">CHAPTER TWENTY-NINE</a></li>
+<li><a href="ch41.html" class="toc-link">CHAPTER THIRTY</a></li>
+<li><a href="ch42.html" class="toc-link">CHAPTER THIRTY-ONE</a></li>
+<li><a href="ch43.html" class="toc-link">CHAPTER THIRTY-TWO</a></li>
+<li><a href="ch44.html" class="toc-link">CHAPTER THIRTY-THREE</a></li>
+<li><a href="ch45.html" class="toc-link">CHAPTER THIRTY-FOUR</a></li>
+<li class="toc-part">PART FOUR</li>
+<li><a href="ch46.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch47.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch48.html" class="toc-link">CHAPTER THREE</a></li>
+<li><a href="ch49.html" class="toc-link">CHAPTER FOUR</a></li>
+<li><a href="ch50.html" class="toc-link">CHAPTER FIVE</a></li>
+<li><a href="ch51.html" class="toc-link">CHAPTER SIX</a></li>
+<li><a href="ch52.html" class="toc-link">CHAPTER SEVEN</a></li>
+<li><a href="ch53.html" class="toc-link">CHAPTER EIGHT</a></li>
+<li><a href="ch54.html" class="toc-link">CHAPTER NINE</a></li>
+<li><a href="ch55.html" class="toc-link">CHAPTER TEN</a></li>
+<li><a href="ch56.html" class="toc-link">CHAPTER ELEVEN</a></li>
+<li><a href="ch57.html" class="toc-link">CHAPTER TWELVE</a></li>
+<li><a href="ch58.html" class="toc-link">CHAPTER THIRTEEN</a></li>
+<li><a href="ch59.html" class="toc-link">CHAPTER FOURTEEN</a></li>
+<li><a href="ch60.html" class="toc-link">CHAPTER FIFTEEN</a></li>
+<li><a href="ch61.html" class="toc-link">CHAPTER SIXTEEN</a></li>
+<li><a href="ch62.html" class="toc-link">CHAPTER SEVENTEEN</a></li>
+<li><a href="ch63.html" class="toc-link">CHAPTER EIGHTEEN</a></li>
+<li><a href="ch64.html" class="toc-link">CHAPTER NINETEEN</a></li>
+<li><a href="ch65.html" class="toc-link">CHAPTER TWENTY</a></li>
+<li><a href="ch66.html" class="toc-link">CHAPTER TWENTY-ONE</a></li>
+<li class="toc-part">PART FIVE</li>
+<li><a href="ch67.html" class="toc-link">CHAPTER ONE</a></li>
+<li><a href="ch68.html" class="toc-link">CHAPTER TWO</a></li>
+<li><a href="ch69.html" class="toc-link">CHAPTER THREE</a></li>
+
+    </ul>
+  </div>
+</nav>
+
+<div id="main">
+  <div id="cover">
+    <div class="cover-ornament">A Novel</div>
+    <h1 class="cover-title">
+      <span class="cover-the">The</span>
+      Silent Patient
+    </h1>
+    <div class="cover-divider"></div>
+    <div class="cover-author">Alex Michaelides</div>
+    <p class="cover-tagline">"But why does she not speak?" — Euripides, Alcestis</p>
+  </div>
+
+  <div class="font-controls">
+    FONT SIZE:
+    <button class="font-btn" onclick="changeFont(-1)">A−</button>
+    <button class="font-btn" onclick="changeFont(1)">A+</button>
+  </div>
+
+  <div id="chapters-wrap">
+
+<article class="chapter" id="ch4">
+
+<div class="chheader">
+<div class="partlabel">PART ONE</div>
+<h2 class="chtitle">CHAPTER THREE</h2>
+</div>
+<div class="chbody">
+<p>MY NAME IS THEO FABER. I’m forty-two years old. And I became a psychotherapist because I was fucked-up. That’s the truth—though it’s not what I said during the job interview, when the question was put to me. “What drew you to psychotherapy, do you think?” asked Indira Sharma, peering at me over the rims of her owlish glasses. Indira was consultant psychotherapist at the Grove. She was in her late fifties with an attractive round face and long jet-black hair streaked with gray. She gave me a small smile—as if to reassure me this was an easy question, a warm-up volley, a precursor to trickier shots to follow. I hesitated. I could feel the other members of the panel looking at me. I remained conscious of maintaining eye contact as I trotted out a rehearsed response, a sympathetic tale about working part-time in a care home as a teenager; and how this inspired an interest in psychology, which led to a postgraduate study of psychotherapy, and so on. “I wanted to help people, I suppose.” I shrugged. “That’s it, really.” Which was bullshit. I mean, of course I wanted to help people. But that was a secondary aim— particularly at the time I started training. The real motivation was purely selfish. I was on a quest to help myself. I believe the same is true for most people who go into mental health. We are drawn to this profession because we are damaged—we study psychology to heal ourselves. Whether we are prepared to admit this or not is another question. As human beings, in our earliest years we reside in a land before memory. We like to think of ourselves as emerging from this primordial fog with our characters fully formed, like Aphrodite rising perfect from the sea foam. But thanks to increasing research into the development of the brain, we know this is not the case. We are born with a brain half-formed—more like a muddy lump of clay than a divine Olympian. As the psychoanalyst Donald Winnicott put it, “There is no such thing as a baby.” The development of our personalities doesn’t take place in isolation, but in relationship with others— we are shaped and completed by unseen, unremembered forces; namely, our parents.</p>
+<p>This is frightening, for obvious reasons. Who knows what indignities we suffered, what torments and abuses, in this land before memory? Our character was formed without our even knowing it. In my case, I grew up feeling edgy, afraid; anxious. This anxiety seemed to predate my existence and exist independently of me. But I suspect it originated in my relationship with my father, around whom I was never safe. My father’s unpredictable and arbitrary rages made any situation, no matter how benign, into a potential minefield. An innocuous remark or a dissenting voice would trigger his anger and set off a series of explosions from which there was no refuge. The house shook as he shouted, chasing me upstairs into my room. I’d dive and slide under the bed, against the wall. I’d breathe in the feathery air, praying the bricks would swallow me up and I would disappear. But his hand would grab hold of me, drag me out to meet my fate. The belt would be pulled off and whistle in the air before it struck, each successive blow knocking me sideways, burning my flesh. Then the whipping would be over, as abruptly as it had begun. I’d be tossed to the floor, landing in a crumpled heap. A rag doll discarded by an angry toddler. I was never sure what I had done to trigger this anger, or if I deserved it. I asked my mother why my father was always so angry with me, and she gave a despairing shrug and said, “How should I know? Your father’s completely mad.” When she said he was mad, she wasn’t joking. If assessed by a psychiatrist today, my father would, I suspect, be diagnosed with a personality disorder—an illness that went untreated for the duration of his life. The result was a childhood and adolescence dominated by hysteria and physical violence: threats, tears, and breaking glass. There were moments of happiness; usually when my father was away from home. I remember one winter he was in America on a business trip for a month. For thirty days, my mother and I had free rein of the house and garden without his watchful eye. It snowed heavily in London that December, and the whole of our garden was buried beneath a crisp thick white carpet. Mum and I made a snowman. Unconsciously or not, we built him to represent our absent master: I christened him Dad, and with his big belly, two black stones for eyes, and two slanting twigs for stern eyebrows, the resemblance was uncanny. We completed the illusion by giving him my father’s gloves, hat, and umbrella. Then we pelted him violently with snowballs, giggling like naughty children.</p>
+<p>There was a heavy snowstorm that night. My mother went to bed and I pretended to sleep, then I snuck out to the garden and stood under the falling snow. I held my hands outstretched, catching snowflakes, watching them vanish on my fingertips. It felt joyous and frustrating and spoke to some truth I couldn’t express; my vocabulary was too limited, my words too loose a net in which to catch it. Somehow grasping at vanishing snowflakes is like grasping at happiness: an act of possession that instantly gives way to nothing. It reminded me that there was a world outside this house: a world of vastness and unimaginable beauty; a world that, for now, remained out of my reach. That memory has repeatedly returned to me over the years. It’s as if the misery that surrounded that brief moment of freedom made it burn even brighter: a tiny light surrounded by darkness. My only hope of survival, I realized, was to retreat—physically as well as psychically. I had to get away, far away. Only then would I be safe. And eventually, at eighteen, I got the grades I needed to secure a place at university. I left that semi-detached prison in Surrey—and I thought I was free. I was wrong. I didn’t know it then, but it was too late—I had internalized my father, introjected him, buried him deep in my unconscious. No matter how far I ran, I carried him with me wherever I went. I was pursued by an infernal, relentless chorus of furies, all with his voice—shrieking that I was worthless, shameful, a failure. During my first term at university, that first cold winter, the voices got so bad, so paralyzing, they controlled me. Immobilized by fear, I was unable to go out, socialize, or make any friends. I might as well have never left home. It was hopeless. I was defeated, trapped. Backed into a corner. No way out. Only one solution presented itself. I went from chemist to chemist buying packets of paracetamol. I bought only a few packets at a time to avoid arousing suspicion—but I needn’t have worried. No one paid me the least attention; I was clearly as invisible as I felt. It was cold in my room, and my fingers were numb and clumsy as I tore open the packets. It took an immense effort to swallow all the tablets. But I forced them all down, pill after bitter pill. Then I crawled onto my uncomfortable narrow bed. I shut my eyes and waited for death.</p>
+<p>But death didn’t come. Instead a searing, gut-wrenching pain tore through my insides. I doubled up and vomited, throwing up bile and half-digested pills all over myself. I lay in the dark, a fire burning in my stomach, for what seemed like eternity. And then, slowly, in the darkness, I realized something. I didn’t want to die. Not yet; not when I hadn’t lived. This gave me a kind of hope, however murky and ill defined. It propelled me at any rate to acknowledge that I couldn’t do this alone: I needed help. I found it—in the form of Ruth, a psychotherapist referred to me through the university counseling service. Ruth was white-haired and plump and had something grandmotherly about her. She had a sympathetic smile—a smile I wanted to believe in. She didn’t say much at first. She just listened while I talked. I talked about my childhood, my home, my parents. As I talked, I found that no matter how distressing the details I related, I could feel nothing. I was disconnected from my emotions, like a hand severed from a wrist. I talked about painful memories and suicidal impulses—but couldn’t feel them. I would, however, occasionally look up at Ruth’s face. To my surprise, tears would be collecting in her eyes as she listened. This may seem hard to grasp, but those tears were not hers. They were mine. At the time I didn’t understand. But that’s how therapy works. A patient delegates his unacceptable feelings to his therapist; and she holds everything he is afraid to feel, and she feels it for him. Then, ever so slowly, she feeds his feelings back to him. As Ruth fed mine back to me. We continued seeing each other for several years, Ruth and I. She remained the one constant in my life. Through her, I internalized a new kind of relationship with another human being: one based on mutual respect, honesty, and kindness—not recrimination, anger, and violence. I slowly started to feel differently inside about myself—less empty, more capable of feeling, less afraid. The hateful internal chorus never entirely left me—but I now had Ruth’s voice to counter it, and I paid less attention. As a result, the voices in my head grew quieter and would temporarily vanish. I’d feel peaceful—even happy, sometimes. Psychotherapy had quite literally saved my life. More important, it had transformed the quality of that life. The talking cure was central to who I</p>
+<p>became—in a profound sense, it defined me. It was, I knew, my vocation. After university, I trained as a psychotherapist in London. Throughout my training, I continued seeing Ruth. She remained supportive and encouraging, although she warned me to be realistic about the path I was undertaking: “It’s no walk in the park” was how she put it. She was right. Working with patients, getting my hands dirty—well, it proved far from comfortable. I remember my first visit to a secure psychiatric unit. Within a few minutes of my arrival, a patient had pulled down his pants, squatted, and defecated in front of me. A stinking pile of shit. And subsequent incidents, less stomach-churning but just as dramatic—messy botched suicides, attempts at self-harm, uncontained hysteria and grief—all felt more than I could bear. But each time, somehow, I drew on hitherto untapped resilience. It got easier. It’s odd how quickly one adapts to the strange new world of a psychiatric unit. You become increasingly comfortable with madness—and not just the madness of others, but your own. We’re all crazy, I believe, just in different ways. Which is why—and how—I related to Alicia Berenson. I was one of the lucky ones. Thanks to a successful therapeutic intervention at a young age, I was able to pull back from the brink of psychic darkness. In my mind, however, the other narrative remained forever a possibility: I might have gone crazy—and ended my days locked in an institution, like Alicia. There but for the grace of God … I couldn’t say any of this to Indira Sharma when she asked why I became a psychotherapist. It was an interview panel, after all—and if nothing else, I knew how to play the game. “In the end,” I said, “I believe the training makes you into a psychotherapist. Regardless of your initial intentions.” Indira nodded sagely. “Yes, quite right. Very true.” The interview went well. My experience of working at Broadmoor gave me an edge, Indira said—demonstrating I could cope with extreme psychological distress. I was offered the job on the spot, and I accepted. One month later, I was on my way to the Grove.</p>
+</div>
+
+</article>
+
+        <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
+            <a href="ch3.html" style="padding: 10px 20px; background: #c8922a; color: #1a1208; text-decoration: none; border-radius: 4px; margin-right: 10px; font-weight: bold;">&laquo; Previous</a>
+            <a href="index.html" style="padding: 10px 20px; background: #f0e9d6; color: #1a1208; text-decoration: none; border-radius: 4px; border: 1px solid #c8922a; font-weight: bold;">Home</a>
+            <a href="ch5.html" style="padding: 10px 20px; background: #c8922a; color: #1a1208; text-decoration: none; border-radius: 4px; margin-left: 10px; font-weight: bold;">Next &raquo;</a>
+        </div>
+        
+
+  </div>
+</div>
+
+
+<script>
+// Font size
+let fontSize = 19;
+try { fontSize = parseInt(localStorage.getItem('tsp_fontSize') || '19'); } catch(e) {}
+function applyFont() {
+  document.querySelectorAll('.chbody').forEach(el => el.style.fontSize = fontSize + 'px');
+}
+function changeFont(d) {
+  fontSize = Math.min(28, Math.max(14, fontSize + d));
+  try { localStorage.setItem('tsp_fontSize', fontSize); } catch(e) {}
+  applyFont();
+}
+applyFont();
+
+// TOC active link on scroll
+const sections = document.querySelectorAll('section.chapter');
+const links = document.querySelectorAll('.toc-link');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+      if (active) {
+        active.classList.add('active');
+        active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// TOC click smooth scroll
+links.forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(link.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+</body>
+</html>
